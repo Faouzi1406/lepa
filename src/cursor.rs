@@ -32,11 +32,12 @@ pub mod cursor {
     /// It is used to create a new cursor and move the cursor
     pub trait CursorIter {
         fn new(input: String) -> Cursor;
-        fn peak_nth(&self, n: usize) -> Option<&[char]>;
+        fn peak_nth(&self, n: usize) -> Option<Vec<char>>;
         fn peek(&self) -> Option<&char>;
         fn position(&self) -> usize;
         fn previous(&self) -> Option<char>;
         fn advance_pos(&mut self, n: usize);
+        fn advance_back(&mut self, n: usize);
     }
 
     impl CursorIter for Cursor {
@@ -52,17 +53,17 @@ pub mod cursor {
 
         /// Peak the next char this will not advance the position of the cursor therefore not
         /// consuming the char
-        fn peak_nth(&self, n: usize) -> Option<&[char]> {
+        fn peak_nth(&self, n: usize) -> Option<Vec<char>> {
             if self.position + n >= self.chars.len() {
                 return None;
             }
-            return Some(&self.chars[self.position..(self.position + n)]);
+            return Some(self.chars[self.position..(self.position + n)].to_vec());
         }
 
         /// Peak the next char this will not advance the position of the cursor therefore not
         /// consume the char
         fn peek(&self) -> Option<&char> {
-            return Some(self.chars.get(self.position + 1)?);
+            return Some(self.chars.get(self.position)?);
         }
 
         /// Get the current position of the cursor
@@ -77,6 +78,12 @@ pub mod cursor {
 
         fn advance_pos(&mut self, n: usize) {
             self.position += n;
+        }
+
+        // Advance the cursor back
+        fn advance_back(&mut self, n: usize) {
+            let pos = self.position - n;
+            self.position = if pos < 0 { 0 } else { pos };
         }
     }
 }

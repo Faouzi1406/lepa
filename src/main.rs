@@ -1,3 +1,6 @@
+use lepa::lexer::lexer::{Lexer, Token};
+
 fn main() {
-    println!("Hello, world!");
+    let lexer = Token::lex(include_str!("../sample_code/main.lp").to_string());
+    println!("{:#?}", lexer);
 }

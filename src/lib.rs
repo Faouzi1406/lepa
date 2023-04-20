@@ -1,150 +1,98 @@
 pub mod cursor;
+pub mod lexer;
 
-pub mod lexer {
-    use crate::cursor::cursor::{Cursor, CursorIter};
+// Test the lexer with the given input
+// I am going to have to change this in the future because it currently doesn't support all tokens
+// yet which might cause some issues
+#[cfg(test)]
+pub mod test_lexer_operators {
+    use crate::lexer::lexer::{Lexer, Operators, Token, TokenType};
 
-    /// The tokeentypes that are used in the lexer
-    pub enum TokenType {
-        Identifier,
-        Number,
-        String,
-        Operator(Operators),
-        Keyword,
-        Dot,
-        Space,
-        SemiColon,
-        Invalid,
+    #[test]
+    fn test_eq_operators() {
+        let input = " = == ".to_string();
+        let lex = Token::lex(input);
+
+        // Verify that second first token is an Eq
+        assert_eq!(lex[0].token_type, TokenType::Operator(Operators::Eq));
+        // Verify that the 3 token is an EqEq
+        assert_eq!(lex[1].token_type, TokenType::Operator(Operators::EqEq));
     }
 
-    /// All the operators
-    pub enum Operators {
-        EqEq,
-        Eq,
-        Less,
-        LessEq,
-        More,
-        MoreEq,
-        Invalid(Box<[char]>),
+    #[test]
+    fn test_less() {
+        let input = " <  <= ".to_string();
+        let lex = Token::lex(input);
+
+        // Verify that the first token is an Less
+        assert_eq!(lex[0].token_type, TokenType::Operator(Operators::Less));
+        // Verify that trhe second token is an LessEq
+        assert_eq!(lex[1].token_type, TokenType::Operator(Operators::LessEq));
     }
 
-    pub struct Token {
-        pub token_type: TokenType,
-        pub value: String,
+    #[test]
+    fn test_more() {
+        let input = " >  >= ".to_string();
+        let lex = Token::lex(input);
+
+        // Verify thath the first token is an More
+        assert_eq!(lex[0].token_type, TokenType::Operator(Operators::More));
+        // Verify that the second token is an MoreEq
+        assert_eq!(lex[1].token_type, TokenType::Operator(Operators::MoreEq));
     }
+}
 
-    impl Token {
-        pub fn new(token_type: TokenType, value: impl AsRef<str>) -> Token {
-            return Token { token_type, value:value.as_ref().to_owned() };
-        }
+#[cfg(test)]
+pub mod test_strings {
+    use crate::lexer::lexer::{Lexer, Token, TokenType};
+
+    #[test]
+    fn test_string() {
+        let input = "\"Hello World\"".to_string();
+        let lex = Token::lex(input);
+
+        // Verify that the first token is a string
+        assert_eq!(lex[0].token_type, TokenType::String,);
+        // Verify that the value of the string is correct
+        assert_eq!(lex[0].value, "Hello World")
     }
+}
 
-    trait Lexer {
-        fn lex(input: String) -> Vec<Token>;
+#[cfg(test)]
+pub mod test_numbers {
+    use crate::lexer::lexer::{Lexer, Token, TokenType};
+
+    #[test]
+    fn test_numn() {
+        let input = " 10 ".to_string();
+        let lex = Token::lex(input);
+        println!("{:#?}", lex);
+
+        // Verify that the first token is a number
+        assert_eq!(lex[0].token_type, TokenType::Number);
+        // Verify that the value of the number is correct
+        assert_eq!(lex[0].value.parse::<f64>().unwrap(), 10.);
     }
+}
 
-    pub trait Tokenizer {
-        fn eq_token(&mut self) -> Token;
-        fn less_token(&mut self) -> Token;
-        fn more_token(&mut self) -> Token;
-        fn string_token(&mut self) -> Token;
-        fn number_token(&mut self) -> Token;
-    }
+#[cfg(test)]
+pub mod test_identifiers {
+    use crate::lexer::lexer::{Token, TokenType, Lexer};
 
-    impl Tokenizer for Cursor {
-        /// My language will not support === cause that is for js
-        fn eq_token(&mut self) -> Token {
-            // If there is no char next it must only be a single =
-            // Therefore it is a single equal
-            let Some(peak) = self.peak_nth(1) else {
-                return Token::new(TokenType::Operator(Operators::Eq), "=");
-            };
+    #[test]
+    fn test_identifier() {
+        let input = " hello world ".to_string();
+        let lex = Token::lex(input);
+        println!("{:#?}", lex);
 
-            // Advance the position by one to consume the next char
-            self.advance_pos(1);
-            match peak {
-                &['='] => Token::new(TokenType::Operator(Operators::EqEq), "=="),
-                _ => Token::new(
-                    TokenType::Operator(Operators::Invalid(Box::from(peak))),
-                    "Invalid equal operator",
-                ),
-            }
-        }
-        fn less_token(&mut self) -> Token {
-            // If there is no char next it must only be a single <
-            let Some(peak) = self.peak_nth(1) else {
-                return Token::new(TokenType::Operator(Operators::Less), "<");
-            };
+        // Verify that the first token is an identifier
+        assert_eq!(lex[0].token_type, TokenType::Identifier);
+        // Verify that the value of the identifier is correct
+        assert_eq!(lex[0].value, "hello");
 
-            // Advance the position by one to consume the next char
-            self.advance_pos(1);
-            match peak {
-                &['='] => Token::new(TokenType::Operator(Operators::LessEq), "<="),
-                _ => Token::new(
-                    TokenType::Operator(Operators::Invalid(Box::from(peak))),
-                    "Invalid less than operator",
-                ),
-            }
-        }
-        fn more_token(&mut self) -> Token {
-            // If there is no char next it must only be a single >
-            let Some(peak) = &self.peak_nth(1) else {
-                return Token::new(TokenType::Operator(Operators::More),  ">");
-            };
-
-            // Advance the position by 1 to consume the next char
-            self.advance_pos(1);
-            match peak {
-                &['='] => Token::new(TokenType::Operator(Operators::MoreEq), "=="),
-                _ => Token::new(
-                    TokenType::Operator(Operators::Invalid(Box::from(*peak))),
-                    "Invalid more than operator",
-                ),
-            }
-        }
-        /// Returns the token type and the value
-        fn string_token(&mut self) -> Token {
-            // If there is no char next it must only be a single >
-            let mut string = String::new();
-            // Advance until we find a "
-            while let Some(char) = self.next() {
-                match char {
-                    '"' => return Token::new(TokenType::String, string),
-                    _ => string.push(char),
-                }
-            }
-            // If we get here it means we did not find a closing quote
-            // This would be considered an error
-            return Token::new(TokenType::Invalid, "Found a string without a closing quote");
-        }
-        /// Returns the token type and the value
-        fn number_token(&mut self) -> Token {
-            let mut number = String::new();
-            // We advance the cursor until we found a space which means there are no more numbers
-            // related to this number
-            while let Some(char) = self.next() {
-                match char {
-                    ' ' => return Token::new(TokenType::String, number),
-                    _ => number.push(char),
-                }
-            }
-            // Return a invalid token if we did not find a space, this would mean the number is
-            // going on forever/ the file ended
-            return Token::new(TokenType::Invalid, "Found a non ending number");
-        }
-    }
-
-    impl Lexer for TokenType {
-        fn lex(input: String) -> Vec<Token> {
-            let mut vec = Vec::new();
-            let mut cursor = Cursor::new(input);
-            while let Some(token) = cursor.next() {
-                match token {
-                    '=' => vec.push(cursor.eq_token()),
-                    '>' => vec.push(cursor.more_token()),
-                    '<' => vec.push(cursor.less_token()),
-                }
-            }
-            return vec;
-        }
+        // Verify that the second token is an identifier
+        assert_eq!(lex[1].token_type, TokenType::Identifier);
+        // Verify that the value of the identifier is correct
+        assert_eq!(lex[1].value, "world");
     }
 }
