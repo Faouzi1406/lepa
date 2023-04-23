@@ -1,5 +1,7 @@
 pub mod cursor;
 pub mod lexer;
+pub mod parser;
+pub mod ast;
 
 // Test the lexer with the given input
 // I am going to have to change this in the future because it currently doesn't support all tokens

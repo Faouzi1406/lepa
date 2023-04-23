@@ -2,7 +2,7 @@ pub mod lexer {
     use crate::cursor::cursor::{Cursor, CursorIter};
 
     /// The tokeentypes that are used in the lexer
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum TokenType {
         Identifier,
         Number,
@@ -24,7 +24,7 @@ pub mod lexer {
         CloseCurlyBracket,
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone, Copy)]
     pub enum KeyWords {
         Let,
         If,
@@ -34,7 +34,7 @@ pub mod lexer {
     }
 
     /// All the operators
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub enum Operators {
         EqEq,
         Eq,
@@ -45,7 +45,7 @@ pub mod lexer {
         Invalid(Box<[char]>),
     }
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Clone)]
     pub struct Token {
         pub token_type: TokenType,
         pub value: String,
