@@ -161,7 +161,10 @@ pub mod lexer {
 
             while let Some(char) = self.next() {
                 match char {
-                    ' ' => return Token::new(TokenType::Number, number),
+                    ';' | ' ' | '}' | ']' | ')' | '=' | '<' | '>' | '+' | '-' | '*' | '/' => {
+                        self.advance_back(1);
+                        return Token::new(TokenType::Number, number);
+                    }
                     _ => number.push(char),
                 }
             }
@@ -188,7 +191,7 @@ pub mod lexer {
                         }
                         return Token::new(TokenType::Identifier, identifier);
                     }
-                    '(' | ')' | '{' | '}' | '[' | ']' | '.' | ',' | '\n' => {
+                    '(' | ')' | '{' | '}' | '[' | ']' | '.' | ',' | '=' | '\n' => {
                         self.advance_back(1);
                         if let Some(token) = Self::keyword_token(&identifier) {
                             return token;

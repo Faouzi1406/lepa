@@ -80,10 +80,9 @@ pub mod cursor {
             self.position += n;
         }
 
-        // Advance the cursor back
         fn advance_back(&mut self, n: usize) {
             let pos = self.position - n;
-            self.position = if pos < 0 { 0 } else { pos };
+            self.position = pos;
         }
     }
 }

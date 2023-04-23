@@ -1,6 +1,6 @@
 use crate::{
-    ast::{Ast, Type},
-    lexer::lexer::{Token, TokenType},
+    ast::{Ast, Type, TypeVar},
+    lexer::lexer::{KeyWords, Operators, Token, TokenType},
 };
 
 #[derive(Debug)]
@@ -44,14 +44,22 @@ pub enum ParseVarType {
 
 impl Parse for Parser {
     fn parse(&mut self) -> Ast {
-        let ast = Ast::new(Type::Program);
+        let mut ast = Ast::new(Type::Program);
+        while let Some(token) = self.next() {
+            match token.token_type {
+                TokenType::Keyword(KeyWords::Let) => {
+                    ast.body.push(self.parse_variable());
+                }
+                _ => {}
+            }
+        }
         ast
     }
 
     fn parse_variable(&mut self) -> Ast {
-        let ast = Ast::new(Type::Variable(crate::ast::Variable {
+        let mut ast = Ast::new(Type::Variable(crate::ast::Variable {
             name: String::new(),
-            value: String::new(),
+            type_: TypeVar::None,
         }));
 
         let mut current = ParseVarType::Id;
@@ -60,11 +68,39 @@ impl Parse for Parser {
                 TokenType::Identifier => {
                     if current == ParseVarType::Id {
                         current = ParseVarType::Value;
-                        match ast.type_ {
-                            Type::Variable(var) => {}
-                            _ => {}
-                        }
+                        ast = Ast::new(Type::Variable(crate::ast::Variable {
+                            name: token.value,
+                            type_:TypeVar::None
+                        }));
                     }
+                }
+                TokenType::Operator(Operators::Eq) => {
+                    current = ParseVarType::Value;
+                }
+                TokenType::String => {
+                    if current == ParseVarType::Value {
+                        // Todo: Return a error and not panic
+                        let Some(var_name) = ast.var_name() else {panic!("Found a variable without a name")};
+
+                        ast = Ast::new(Type::Variable(crate::ast::Variable {
+                            name: var_name,
+                            type_: TypeVar::String(token.value),
+                        }));
+                    }
+                }
+                TokenType::Number => {
+                    if current == ParseVarType::Value {
+                        // Todo: Return a error and not panic
+                        let Some(var_name) = ast.var_name() else {panic!("Found a variable without a name")};
+
+                        ast = Ast::new(Type::Variable(crate::ast::Variable {
+                            name: var_name,
+                            type_: TypeVar::parse_number(token.value),
+                        }));
+                    }
+                }
+                TokenType::SemiColon => {
+                    break;
                 }
                 _ => {}
             }
