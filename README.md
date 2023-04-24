@@ -4,9 +4,9 @@
 
 I also want to get started on actually compiling to assembly now.
 
--[x] Add function parsing **Including function body**
+-[] Add function parsing **Including function body**
 
--[x] Add function parsing **Excluded function body**
+-[] Add function parsing **Excluded function body**
 
 
 -[] Add some parse errors because currently anything is allowed in our language...
