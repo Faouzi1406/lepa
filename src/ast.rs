@@ -2,11 +2,11 @@
 pub enum TypeVar {
     Number(i32),
     String(String),
-    None
+    None,
 }
 
 impl TypeVar {
-    pub fn parse_number(num:String) -> Self  {
+    pub fn parse_number(num: String) -> Self {
         let num = num.parse().unwrap();
         Self::Number(num)
     }
@@ -15,14 +15,21 @@ impl TypeVar {
 #[derive(Debug)]
 pub struct Variable {
     pub name: String,
-    pub type_:TypeVar
+    pub type_: TypeVar,
+}
+
+#[derive(Debug)]
+pub struct Func {
+    pub name: String,
+    pub args: Vec<Variable>,
+    pub body: Option<Box<Ast>>,
 }
 
 #[derive(Debug)]
 pub enum Type {
     Program,
     Variable(Variable),
-    Function,
+    Function(Func),
     Block,
 }
 

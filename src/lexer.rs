@@ -83,17 +83,18 @@ pub mod lexer {
                 return Token::new(TokenType::Operator(Operators::Eq), "=");
             };
 
-            match peak[0..1] {
+            let peak = &peak[0..1];
+            println!("{:#?}", peak);
+            match peak {
                 ['='] => {
                     // Advance the position by one to consume the next char
                     self.advance_pos(1);
                     Token::new(TokenType::Operator(Operators::EqEq), "==")
                 }
                 [' '] => Token::new(TokenType::Operator(Operators::Eq), "="),
-                _ => Token::new(
-                    TokenType::Operator(Operators::Invalid(Box::from(peak))),
-                    "Invalid equal operator",
-                ),
+                _ => {
+                    return Token::new(TokenType::Operator(Operators::Eq), "=");
+                }
             }
         }
         fn less_token(&mut self) -> Token {
@@ -160,13 +161,12 @@ pub mod lexer {
             number.push(prev);
 
             while let Some(char) = self.next() {
-                match char {
-                    ';' | ' ' | '}' | ']' | ')' | '=' | '<' | '>' | '+' | '-' | '*' | '/' => {
-                        self.advance_back(1);
-                        return Token::new(TokenType::Number, number);
-                    }
-                    _ => number.push(char),
+                if char.is_numeric() {
+                    number.push(char);
+                    continue;
                 }
+                self.advance_back(1);
+                return Token::new(TokenType::Number, number);
             }
             // Return a invalid token if we did not find a space, this would mean the number is
             // going on forever/ the file ended
