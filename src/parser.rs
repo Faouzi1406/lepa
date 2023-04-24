@@ -1,301 +1,118 @@
-use crate::{
-    ast::{Ast, Type, TypeVar, Variable},
-    lexer::lexer::{KeyWords, Operators, Token, TokenType},
-};
+use crate::lexer::lexer::Token;
 
-#[derive(Debug)]
+/// Parser struct
+///
+/// Consumes the stream of tokens.
+/// It is used for turning the tokens into a ast
 pub struct Parser {
     current_position: usize,
-    input: Vec<Token>,
-    previous: Option<Token>,
+    tokens: Vec<Token>,
+    prev_token: Option<Token>,
 }
 
+/// Using the Iterator trait for the parser
+/// It will allow for easy iteration over the tokens
 impl Iterator for Parser {
     type Item = Token;
-
+    /// Next for the Parser struct
+    ///
+    /// It will increase the current_position + 1
+    ///
+    /// Therefore consuming the token.
+    ///
+    /// ``` Rust
+    /// let token = Token::new(tokens);
+    ///
+    /// while let Some(token) = token.next() {
+    ///     // Do stuf with the token..
+    ///     println!("token!!!! {:#?}", token);
+    /// }
+    ///
+    /// ```
     fn next(&mut self) -> Option<Self::Item> {
-        let token = self.input.get(self.current_position);
+        let next = self.tokens.get(self.current_position)?;
+        self.prev_token = Some(next.clone());
         self.current_position += 1;
-        self.previous = token.cloned();
-        token.cloned()
+        next.clone().into()
     }
 }
 
-impl Parser {
-    pub fn new(input: Vec<Token>) -> Self {
-        Parser {
-            current_position: 0,
-            input,
-            previous: None,
-        }
+/// # WalkParser
+///
+/// The walkparser trait, it works a lot like the cursor: [cursor.rs](https://github.com/Faouzi1406/lepa/blob/main/src/cursor.rs),
+/// It allows for advancing back over the tokens, peak the next token, peak n amount of tokens, peak token at position I.
+pub trait WalkParser {
+    /// Peak a token at a certaint position
+    /// Peaks the token at current_position + n
+    ///
+    /// # Example
+    ///
+    /// ```rust
+    ///  let parser = Parser {
+    ///     current_position:0,
+    ///     tokens: vec![..,.., Token { .., token_type:TokenType::OpenBrace }],
+    ///     prev_token:None
+    ///  }
+    ///  let token:Option<Token> = parser.peak_nth(2);
+    ///  assert_eq!(token, Some(Token{ .., TokenType::OpenBrace}));
+    /// ```
+    ///
+    /// **This wont advance the current_position therefore not "consuming" the tokens**
+    fn peak_nth(&mut self, i: usize) -> Option<Token>;
+    /// Peaks multiple tokens
+    /// Peaks the tokens from current_position + n
+    ///
+    /// # Example
+    ///
+    /// ``` rust
+    ///
+    ///  let parser = Parser {
+    ///     current_position: 0,
+    ///     tokens: vec![Token {  token_type:TokenType::Identifier }, Token {  token_type:TokenType::OpenBrace}, Token { .., token_type:TokenType::CloseBrace }],
+    ///     prev_token:None
+    ///  }
+    ///  let token:Option<Token> = parser.peak_nth(2);
+    ///  assert_eq!(token, Some(vec![ Token{.. , TokenType::Identifier }, Token{.. , TokenType::OpenBrace} ]));
+    ///  
+    /// ```
+    ///
+    /// **This wont advance the current_position therefore not "consuming" the tokens**
+    fn peak_nth_all(&mut self, n: usize) -> Option<Vec<Token>>;
+    /// Advace back the current position, alows walking back into the token stream.
+    ///
+    /// # Example
+    ///
+    /// ```Rust
+    /// let parser = Parser::new(tokens);
+    ///
+    /// // We move the cursor one position up and get the token
+    /// let next:Option<Token> = parser.next();
+    /// match next {
+    ///     Some(type) => {
+    ///         // do stuff with the token type
+    ///         println!("token wow {:#?}", type);
+    ///         // Move the cursor back by one therefore not consuming the token
+    ///         self.advance_back(1);
+    ///     }
+    ///     None => {}
+    ///}
+    /// // Turns out we need to 
+    /// ```
+    ///
+    /// **This function will panic if you try to advance the token back to a negative number since
+    /// n is a usize and current_position is a usize**
+    /// 
+    fn advance_back(&mut self, n:usize);
+}
+
+impl WalkParser for Parser {
+    fn peak_nth(&mut self, i: usize) -> Option<Token> {
+        Some(self.tokens.get(self.current_position + i)?.clone())
     }
-    pub fn advance_back(&mut self, n:usize) {
-        self.previous = self.input.get(self.current_position - n  - 1).cloned();
+    fn peak_nth_all(&mut self, n: usize) -> Option<Vec<Token>> {
+        return Some(self.tokens[self.current_position..(self.current_position + n)].to_vec());
+    }
+    fn advance_back(&mut self, n:usize) {
         self.current_position -= n;
-    }
-}
-
-pub trait Parse {
-    fn parse(&mut self) -> Result<Ast, String>;
-    fn parse_variable(&mut self) -> Result<Ast, String>;
-    fn parse_func(&mut self) -> Result<Ast, String>;
-    fn parse_args(&mut self) -> Result<Vec<Variable>, String>;
-    fn parse_block(&mut self) -> Result<Ast, String>;
-}
-
-#[derive(PartialEq)]
-pub enum ParseVarType {
-    Id,
-    Value,
-}
-
-impl Parse for Parser {
-    fn parse(&mut self) -> Result<Ast, String> {
-        let mut ast = Ast::new(Type::Program);
-        while let Some(token) = self.next() {
-            match token.token_type {
-                TokenType::Keyword(KeyWords::Let) => {
-                    let var = self.parse_variable()?;
-                    ast.body.push(var);
-                }
-                TokenType::Identifier => {
-                    let func = self.parse_func()?;
-                    ast.body.push(func);
-                }
-                TokenType::Keyword(KeyWords::Fn) => {
-                    let func = self.parse_func()?;
-                    ast.body.push(func);
-                }
-                _ => {}
-            }
-        }
-        Ok(ast)
-    }
-
-    fn parse_variable(&mut self) -> Result<Ast, String>{
-        let mut ast = Ast::new(Type::Variable(crate::ast::Variable {
-            name: String::new(),
-            type_: TypeVar::None,
-        }));
-
-        let mut current = ParseVarType::Id;
-        while let Some(token) = self.next() {
-            match token.token_type {
-                TokenType::Identifier => {
-                    if current == ParseVarType::Id {
-                        current = ParseVarType::Value;
-                        ast = Ast::new(Type::Variable(crate::ast::Variable {
-                            name: token.value,
-                            type_:TypeVar::None
-                        }));
-                    }
-                }
-                TokenType::Operator(Operators::Eq) => {
-                    current = ParseVarType::Value;
-                }
-                TokenType::String => {
-                    if current == ParseVarType::Value {
-                        // Todo: Return a error and not panic
-                        let Some(var_name) = ast.var_name() else { 
-                            return Err("Couldn't parse variable, found a variable with a value but without a name".to_string());
-                        };
-
-                        ast = Ast::new(Type::Variable(crate::ast::Variable {
-                            name: var_name,
-                            type_: TypeVar::String(token.value),
-                        }));
-                    }
-                }
-                TokenType::Number => {
-                    if current == ParseVarType::Value {
-                        // Todo: Return a error and not panic
-                        let Some(var_name) = ast.var_name() else {panic!("Found a variable without a name")};
-
-                        ast = Ast::new(Type::Variable(crate::ast::Variable {
-                            name: var_name,
-                            type_: TypeVar::parse_number(token.value),
-                        }));
-                    }
-                }
-                TokenType::SemiColon => {
-                    break;
-                }
-                _ => {}
-            }
-        }
-        Ok(ast)
-    }
-
-    fn parse_func(&mut self) -> Result<Ast, String> {
-        // We can unwrap here since there has to be a token for us to even execute parse_func()
-         match self.previous.clone().unwrap().token_type {
-            TokenType::Keyword(KeyWords::Fn) => {
-                let Some(token) = self.next() else {return Err("Found a function without a identifier".into())};
-                match token.token_type {
-                    TokenType::Identifier => {
-                        let Some(has_body) = self.next() else {
-                            self.advance_back(1);
-                            return Ok(Ast::new(Type::Function(crate::ast::Func { name: token.value, args: self.parse_args()?, body: None })))
-                        };
-                        match has_body.token_type {
-                            TokenType::OpenBrace => { 
-                                self.advance_back(1);
-                                let args = self.parse_args()?;
-                                let parse_block = self.parse_block()?;
-                                self.next();
-                                return Ok(Ast::new(Type::Function(crate::ast::Func { name: token.value, args, body: Some(Box::from(parse_block)) })))
-                            }
-                            _ => {
-                                return Ok(Ast::new(Type::Function(crate::ast::Func { name: token.value, args: self.parse_args()?, body: None })))
-                            }
-                        }
-                    },
-                    _ => return Err("Invalid function sequence.".into())
-                }
-            }
-            TokenType::Identifier => {
-                    let Some(has_body) = self.next() else {
-                        self.advance_back(1);
-                        return Ok(Ast::new(Type::Function(crate::ast::Func { name: self.previous.clone().unwrap().value, args: self.parse_args()?, body: None })));
-                    };
-                    self.advance_back(1);
-                    match has_body.token_type {
-                        TokenType::OpenBracket => { 
-                            println!("I am being called{:#?}", self);
-                            let name =  self.previous.clone().unwrap().value;
-                            let args = self.parse_args()?;
-                            self.next();
-                            let parse_block = self.parse_block()?;
-                            return Ok(Ast::new(Type::Function(crate::ast::Func { name, args, body: Some(Box::from(parse_block)) })));
-                        }
-                        _ => {
-                            return Ok(Ast::new(Type::Function(crate::ast::Func { name: self.previous.clone().unwrap().value, args: self.parse_args()?, body: None })));
-                        }
-                    }
-            }
-            val => return Err(format!("Invalid function: {:#?}", val))
-        };
-    }
-
-    fn parse_args(&mut self) -> Result<Vec<Variable>, String> {
-        let mut args = Vec::new();
-        // This is the state of the args
-        // If a ( is not found it will not parse arguments
-        // If it is never valid this but however a ) is found this will lead to and error Result 
-        // Otherwise all tokens will be consumed since the function was closed but never opened.
-        let mut valid = false;
-        // The current argument, used to make sure there are komma's inbetween the arguments to
-        // make sure parsing the arguments goes correctly
-        let mut current:Vec<Token> = Vec::new();
-        while let Some(arg) =  self.next() {
-            match arg.token_type {
-                TokenType::CloseBrace => {
-                    if valid  {
-                        let Some(curr) = current.pop() else {
-                            break;
-                        };
-                        match curr.token_type {
-                            TokenType::Identifier => {
-                                args.push(Variable { name: curr.value, type_: TypeVar::None })
-                            }
-                            TokenType::String => {
-                                args.push(Variable { name: "".to_string(), type_: TypeVar::String(curr.value) })
-                            }
-                            TokenType::Number => {
-                                args.push(Variable { name: "".to_string(), type_: TypeVar::parse_number(curr.value) })
-                            }
-                            _ => return Err(format!("Invalid argument {:#?},", curr))
-                        }
-                        break;
-                    }
-                    else {
-                        return Err("Function was opened but it was never closed.".into());
-                    }
-                }
-                TokenType::OpenBrace => {
-                    if valid == false {
-                        valid = true;
-                    }else {
-                        return Err("Functions inside functions are currently not supported.".into());
-                    }
-                }
-                TokenType::Identifier =>  {
-                    if valid {
-                        if current.len() > 0 {
-                            return Err("Found multiple arguments without comma's inbetween them. ".into())
-                        }
-                        current.push(arg);
-                    }
-                }
-                TokenType::Comma => {
-                    if valid {
-                        let Some(curr) = current.pop() else {
-                            return Err("Found more comma's than arguments.".into())
-                        };
-                        match curr.token_type {
-                            TokenType::Identifier => {
-                                args.push(Variable { name: curr.value, type_: TypeVar::None })
-                            }
-                            TokenType::String => {
-                                args.push(Variable { name: "".to_string(), type_: TypeVar::String(curr.value) })
-                            }
-                            TokenType::Number => {
-                                args.push(Variable { name: "".to_string(), type_: TypeVar::parse_number(curr.value) })
-                            }
-                            _ => return Err(format!("Invalid argument {:#?},", curr))
-                        }
-                    }
-                }
-                TokenType::String => {
-                    if valid {
-                        if current.len() > 0 {
-                            return Err("Found multiple arguments without comma's inbetween them. ".into())
-                        }
-                        current.push(arg);
-                    }
-                }
-                TokenType::Number => {
-                    if valid {
-                        if current.len() > 0 {
-                            return Err("Found multiple arguments without comma's inbetween them. ".into())
-                        }
-                        current.push(arg);
-                    }
-                }
-                TokenType::Keyword(KeyWords::Fn) => (),
-                _ => ()
-            }
-        }
-        return Ok(args)
-    }
-
-    fn parse_block(&mut self) -> Result<Ast, String> {
-        let mut ast = Ast::new(Type::Block);  
-
-        while let Some(token) = self.next() {
-            match token.token_type {
-                TokenType::Keyword(KeyWords::Let) => {
-                    let var = self.parse_variable()?;
-                    ast.body.push(var);
-                }
-                TokenType::Identifier => {
-                    let func = self.parse_func()?;
-                    ast.body.push(func);
-                }
-                TokenType::Keyword(KeyWords::Fn) => {
-                    let func = self.parse_func()?;
-                    ast.body.push(func);
-                }
-                TokenType::OpenBrace => {
-                    let parse = self.parse_block()?;
-                    ast.body.push(parse);
-                }
-                TokenType::CloseBrace => {
-                    return Ok(ast);
-                }
-                _ => {}
-            }
-        } 
-        return Ok(ast);
     }
 }

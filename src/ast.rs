@@ -1,4 +1,4 @@
-#[derive(Debug)]
+#[derive(Debug , PartialEq)]
 pub enum TypeVar {
     Number(i32),
     String(String),
@@ -12,20 +12,20 @@ impl TypeVar {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Variable {
     pub name: String,
     pub type_: TypeVar,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Func {
     pub name: String,
     pub args: Vec<Variable>,
     pub body: Option<Box<Ast>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Type {
     Program,
     Variable(Variable),
@@ -33,7 +33,7 @@ pub enum Type {
     Block,
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Ast {
     pub type_: Type,
     pub body: Vec<Ast>,
