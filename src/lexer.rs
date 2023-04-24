@@ -31,6 +31,8 @@ pub mod lexer {
         Else,
         Fn,
         Bool,
+        While,
+        For
     }
 
     /// All the operators
@@ -49,13 +51,15 @@ pub mod lexer {
     pub struct Token {
         pub token_type: TokenType,
         pub value: String,
+        pub line:usize
     }
 
     impl Token {
-        pub fn new(token_type: TokenType, value: impl AsRef<str>) -> Token {
+        pub fn new(token_type: TokenType, value: impl AsRef<str>, line:usize) -> Token {
             return Token {
                 token_type,
                 value: value.as_ref().to_owned(),
+                line
             };
         }
     }
@@ -65,93 +69,94 @@ pub mod lexer {
     }
 
     pub trait Tokenizer {
-        fn eq_token(&mut self) -> Token;
-        fn less_token(&mut self) -> Token;
-        fn more_token(&mut self) -> Token;
-        fn string_token(&mut self) -> Token;
-        fn number_token(&mut self) -> Token;
-        fn identifier_token(&mut self) -> Token;
-        fn keyword_token(t: impl AsRef<str>) -> Option<Token>;
+        fn eq_token(&mut self, l:usize) -> Token;
+        fn less_token(&mut self, l:usize) -> Token;
+        fn more_token(&mut self, l:usize) -> Token;
+        fn string_token(&mut self, l:usize) -> Token;
+        fn number_token(&mut self, l:usize) -> Token;
+        fn identifier_token(&mut self, l:usize) -> Token;
+        fn keyword_token(t: impl AsRef<str>, l:usize) -> Option<Token>;
     }
 
     impl Tokenizer for Cursor {
         /// My language will not support === cause that is for js
-        fn eq_token(&mut self) -> Token {
+        fn eq_token(&mut self, l:usize) -> Token {
             // If there is no char next it must only be a single =
             // Therefore it is a single equal
             let Some(peak) = self.peak_nth(1) else {
-                return Token::new(TokenType::Operator(Operators::Eq), "=");
+                return Token::new(TokenType::Operator(Operators::Eq), "=", l);
             };
 
             let peak = &peak[0..1];
-            println!("{:#?}", peak);
             match peak {
                 ['='] => {
                     // Advance the position by one to consume the next char
                     self.advance_pos(1);
-                    Token::new(TokenType::Operator(Operators::EqEq), "==")
+                    Token::new(TokenType::Operator(Operators::EqEq), "==", l)
                 }
-                [' '] => Token::new(TokenType::Operator(Operators::Eq), "="),
+                [' '] => Token::new(TokenType::Operator(Operators::Eq), "=", l),
                 _ => {
-                    return Token::new(TokenType::Operator(Operators::Eq), "=");
+                    return Token::new(TokenType::Operator(Operators::Eq), "=", l);
                 }
             }
         }
-        fn less_token(&mut self) -> Token {
+        fn less_token(&mut self, l:usize) -> Token {
             // If there is no char next it must only be a single <
             let Some(peak) = self.peak_nth(1) else {
-                return Token::new(TokenType::Operator(Operators::Less), "<");
+                return Token::new(TokenType::Operator(Operators::Less), "<", l);
             };
 
             match peak[0..1] {
                 ['='] => {
                     // Advance the position by one to consume the next char
                     self.advance_pos(1);
-                    Token::new(TokenType::Operator(Operators::LessEq), "<=")
+                    Token::new(TokenType::Operator(Operators::LessEq), "<=", l)
                 }
-                [' '] => Token::new(TokenType::Operator(Operators::Less), "<"),
+                [' '] => Token::new(TokenType::Operator(Operators::Less), "<", l),
                 _ => Token::new(
                     TokenType::Operator(Operators::Invalid(Box::from(peak))),
                     "Invalid less operator",
+                    l
                 ),
             }
         }
-        fn more_token(&mut self) -> Token {
+        fn more_token(&mut self, l:usize) -> Token {
             // If there is no char next it must only be a single >
             let Some(peak) = self.peak_nth(1) else {
-                return Token::new(TokenType::Operator(Operators::More),  ">");
+                return Token::new(TokenType::Operator(Operators::More),  ">",l);
             };
 
             match peak[0..1] {
                 ['='] => {
                     // Advance the position by 1 to consume the next char
                     self.advance_pos(1);
-                    Token::new(TokenType::Operator(Operators::MoreEq), "==")
+                    Token::new(TokenType::Operator(Operators::MoreEq), "==", l)
                 }
-                [' '] => Token::new(TokenType::Operator(Operators::More), ">"),
+                [' '] => Token::new(TokenType::Operator(Operators::More), ">", l),
                 _ => Token::new(
                     TokenType::Operator(Operators::Invalid(Box::from(peak))),
                     "Invalid more operator",
+                    l
                 ),
             }
         }
         /// Returns the token type and the value
-        fn string_token(&mut self) -> Token {
+        fn string_token(&mut self, l:usize) -> Token {
             // If there is no char next it must only be a single >
             let mut string = String::new();
             // Advance until we find a "
             while let Some(char) = self.next() {
                 match char {
-                    '"' => return Token::new(TokenType::String, string),
+                    '"' => return Token::new(TokenType::String, string, l),
                     _ => string.push(char),
                 }
             }
             // If we get here it means we did not find a closing quote
             // This would be considered an error
-            return Token::new(TokenType::Invalid, "Found a string without a closing quote");
+            return Token::new(TokenType::Invalid, "Found a string without a closing quote", l);
         }
         /// Returns the token type and the value
-        fn number_token(&mut self) -> Token {
+        fn number_token(&mut self, l:usize) -> Token {
             let mut number = String::new();
             // We advance the cursor until we found a space which means there are no more numbers
             // related to this number
@@ -166,16 +171,16 @@ pub mod lexer {
                     continue;
                 }
                 self.advance_back(1);
-                return Token::new(TokenType::Number, number);
+                return Token::new(TokenType::Number, number, l);
             }
             // Return a invalid token if we did not find a space, this would mean the number is
             // going on forever/ the file ended
-            return Token::new(TokenType::Invalid, "Found a non ending number");
+            return Token::new(TokenType::Invalid, "Found a non ending number", l);
         }
 
         // Matches the identifier to a keyword
         // If it is not a keyword it returns the identifier otherwise it returns the keyword
-        fn identifier_token(&mut self) -> Token {
+        fn identifier_token(&mut self, l:usize) -> Token {
             // The identifier is the value that gets assigned to a variable
             let mut identifier = String::new();
 
@@ -186,17 +191,17 @@ pub mod lexer {
             while let Some(char) = self.next() {
                 match char {
                     ' ' => {
-                        if let Some(token) = Self::keyword_token(&identifier) {
+                        if let Some(token) = Self::keyword_token(&identifier, l) {
                             return token;
                         }
-                        return Token::new(TokenType::Identifier, identifier);
+                        return Token::new(TokenType::Identifier, identifier, l);
                     }
                     '(' | ')' | '{' | '}' | '[' | ']' | '.' | ',' | '=' | '\n' => {
                         self.advance_back(1);
-                        if let Some(token) = Self::keyword_token(&identifier) {
+                        if let Some(token) = Self::keyword_token(&identifier, l) {
                             return token;
                         }
-                        return Token::new(TokenType::Identifier, identifier);
+                        return Token::new(TokenType::Identifier, identifier, l);
                     }
                     _ => identifier.push(char),
                 }
@@ -204,18 +209,20 @@ pub mod lexer {
 
             // Return a invalid token if we did not find a space, this would mean the identifier is
             // going on forever/the file ended
-            return Token::new(TokenType::Invalid, "Found a non ending identifier");
+            return Token::new(TokenType::Invalid, "Found a non ending identifier", l);
         }
 
         /// Returns a token if the token is in the existing field of tokens
-        fn keyword_token(t: impl AsRef<str>) -> Option<Token> {
+        fn keyword_token(t: impl AsRef<str>, l:usize) -> Option<Token> {
             match t.as_ref() {
-                "let" => Some(Token::new(TokenType::Keyword(KeyWords::Let), "let")),
-                "fn" => Some(Token::new(TokenType::Keyword(KeyWords::Fn), "fn")),
-                "if" => Some(Token::new(TokenType::Keyword(KeyWords::If), "if")),
-                "else" => Some(Token::new(TokenType::Keyword(KeyWords::Else), "else")),
+                "let" => Some(Token::new(TokenType::Keyword(KeyWords::Let), "let", l)),
+                "fn" => Some(Token::new(TokenType::Keyword(KeyWords::Fn), "fn", l)),
+                "if" => Some(Token::new(TokenType::Keyword(KeyWords::If), "if", l)),
+                "else" => Some(Token::new(TokenType::Keyword(KeyWords::Else), "else", l)),
+                "while" => Some(Token::new(TokenType::Keyword(KeyWords::While), "while", l)),
+                "for" => Some(Token::new(TokenType::Keyword(KeyWords::For), "for", l)),
                 value if value == "true" || value == "false" => {
-                    Some(Token::new(TokenType::Keyword(KeyWords::Bool), value))
+                    Some(Token::new(TokenType::Keyword(KeyWords::Bool), value, l))
                 }
                 _ => None,
             }
@@ -226,25 +233,30 @@ pub mod lexer {
         fn lex(input: String) -> Vec<Token> {
             let mut vec = Vec::new();
             let mut cursor = Cursor::new(input);
+            let mut line = 0;
             while let Some(token) = cursor.next() {
                 match token {
-                    ' ' | '\n' | '\t' => continue,
-                    ',' => vec.push(Token::new(TokenType::Comma, ",")),
-                    '.' => vec.push(Token::new(TokenType::Dot, ".")),
-                    '}' => vec.push(Token::new(TokenType::CloseBrace, "}")),
-                    '{' => vec.push(Token::new(TokenType::OpenBrace, "{")),
-                    '(' => vec.push(Token::new(TokenType::OpenBrace, "(")),
-                    ')' => vec.push(Token::new(TokenType::CloseBrace, ")")),
-                    '=' => vec.push(cursor.eq_token()),
-                    '>' => vec.push(cursor.more_token()),
-                    '<' => vec.push(cursor.less_token()),
-                    '0'..='9' => vec.push(cursor.number_token()),
-                    '"' => vec.push(cursor.string_token()),
-                    '[' => vec.push(Token::new(TokenType::OpenBracket, "[")),
-                    ']' => vec.push(Token::new(TokenType::CloseBracket, "]")),
-                    ';' => vec.push(Token::new(TokenType::SemiColon, ";")),
-                    'A'..='Z' | 'a'..='z' => vec.push(cursor.identifier_token()),
-                    _ => vec.push(Token::new(TokenType::Invalid, "Invalid token")),
+                    '\n' => {
+                        line +=1;
+                        continue;
+                    }
+                    ' ' |  '\t' => continue,
+                    ',' => vec.push(Token::new(TokenType::Comma, ",", line)),
+                    '.' => vec.push(Token::new(TokenType::Dot, ".", line)),
+                    '}' => vec.push(Token::new(TokenType::CloseBrace, "}", line)),
+                    '{' => vec.push(Token::new(TokenType::OpenBrace, "{", line)),
+                    '(' => vec.push(Token::new(TokenType::OpenBrace, "(", line)),
+                    ')' => vec.push(Token::new(TokenType::CloseBrace, ")", line)),
+                    '=' => vec.push(cursor.eq_token(line)),
+                    '>' => vec.push(cursor.more_token(line)),
+                    '<' => vec.push(cursor.less_token(line)),
+                    '0'..='9' => vec.push(cursor.number_token(line)),
+                    '"' => vec.push(cursor.string_token(line)),
+                    '[' => vec.push(Token::new(TokenType::OpenBracket, "[", line)),
+                    ']' => vec.push(Token::new(TokenType::CloseBracket, "]", line)),
+                    ';' => vec.push(Token::new(TokenType::SemiColon, ";", line)),
+                    'A'..='Z' | 'a'..='z' => vec.push(cursor.identifier_token(line)),
+                    _ => vec.push(Token::new(TokenType::Invalid, "Invalid token", line)),
                 }
             }
             return vec;

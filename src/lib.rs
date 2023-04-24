@@ -1,7 +1,8 @@
+pub mod ast;
+pub mod compiler;
 pub mod cursor;
 pub mod lexer;
 pub mod parser;
-pub mod ast;
 
 // Test the lexer with the given input
 // I am going to have to change this in the future because it currently doesn't support all tokens
@@ -79,7 +80,7 @@ pub mod test_numbers {
 
 #[cfg(test)]
 pub mod test_identifiers {
-    use crate::lexer::lexer::{Token, TokenType, Lexer};
+    use crate::lexer::lexer::{Lexer, Token, TokenType};
 
     #[test]
     fn test_identifier() {
@@ -96,5 +97,25 @@ pub mod test_identifiers {
         assert_eq!(lex[1].token_type, TokenType::Identifier);
         // Verify that the value of the identifier is correct
         assert_eq!(lex[1].value, "world");
+    }
+}
+
+#[cfg(test)]
+pub mod test_keywords {
+    use crate::lexer::lexer::{KeyWords, Lexer, Token, TokenType};
+
+    #[test]
+    fn test_if_else() {
+        let input = " if  else ".to_string();
+        let lex = Token::lex(input);
+        assert_eq!(lex[0].token_type, TokenType::Keyword(KeyWords::If));
+        assert_eq!(lex[1].token_type, TokenType::Keyword(KeyWords::Else));
+    }
+
+    #[test]
+    fn test_let(){
+        let input = " let ";
+        let lex = Token::lex(input.into());
+        assert_eq!(lex[0].token_type, TokenType::Keyword(KeyWords::Let));
     }
 }

@@ -13,4 +13,4 @@ I also want to get started on actually compiling to assembly now.
 
 
 # When 25-04-2023
--[x] Parse expression like if else 
+-[] Parse expression like if else 
