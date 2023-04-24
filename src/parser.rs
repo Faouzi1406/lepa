@@ -1,4 +1,4 @@
-use crate::lexer::lexer::Token;
+use crate::lexer::lexer::{Token, TokenType};
 
 /// Parser struct
 ///
@@ -77,7 +77,7 @@ pub trait WalkParser {
     ///  let mut parser:Parser = Parser {
     ///  current_position:0,
     ///  tokens:parser,
-    ///  prev_token:None 
+    ///  prev_token:None
     ///  };
     ///  let token:Option<Vec<Token>> = parser.peak_nth_all(2);
     ///  assert_eq!(token, Some(vec![Token { token_type: TokenType::Keyword(KeyWords::Let), value: "let".into(), line: 0 }, Token { token_type: TokenType::Identifier, value: "main".into(), line: 0 }]));
@@ -86,6 +86,28 @@ pub trait WalkParser {
     ///
     /// **This wont advance the current_position therefore not "consuming" the tokens**
     fn peak_nth_all(&mut self, n: usize) -> Option<Vec<Token>>;
+    /// Retrieves tokens up until a certaint tokentype
+    /// It will advance the current_posisition up until that token and return the tokens found up
+    /// until that token, if the token is never found it returns None.
+    ///
+    /// # Example
+    ///
+    /// ``` rust
+    ///  use lepa::lexer::lexer::{Token, Lexer, TokenType, KeyWords};
+    ///  use lepa::parser::Parser;
+    ///  use lepa::parser::WalkParser;
+    ///
+    ///  let mut parser = Token::lex(include_str!("../sample_code/main.lp").to_string());
+    ///  let mut parser:Parser = Parser {
+    ///  current_position:0,
+    ///  tokens:parser,
+    ///  prev_token:None
+    ///  };
+    ///  let token:Option<Vec<Token>> = parser.until_token(TokenType::OpenBrace);
+    /// ```
+    ///
+    /// **This will advance the current_position therefore not "consume" the tokens**
+    fn up_until_token(&mut self, token: TokenType) -> Option<Vec<Token>>;
     /// Advace back the current position, alows walking back into the token stream.
     ///
     /// # Example
@@ -121,5 +143,20 @@ impl WalkParser for Parser {
     }
     fn advance_back(&mut self, n: usize) {
         self.current_position -= n;
+    }
+    fn up_until_token(&mut self, t: TokenType) -> Option<Vec<Token>> {
+        let mut tokens = Vec::new();
+        while let Some(token) = self.next() {
+            match token {
+                token => {
+                    if token.token_type == t {
+                        tokens.push(token);
+                        return Some(tokens);
+                    }
+                    tokens.push(token);
+                }
+            }
+        }
+        return None;
     }
 }
