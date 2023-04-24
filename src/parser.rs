@@ -103,7 +103,7 @@ pub trait WalkParser {
     ///  tokens:parser,
     ///  prev_token:None
     ///  };
-    ///  let token:Option<Vec<Token>> = parser.until_token(TokenType::OpenBrace);
+    ///  let token:Option<Vec<Token>> = parser.up_until_token(TokenType::OpenBrace);
     /// ```
     ///
     /// **This will advance the current_position therefore not "consume" the tokens**
