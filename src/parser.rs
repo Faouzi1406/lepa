@@ -5,9 +5,9 @@ use crate::lexer::lexer::Token;
 /// Consumes the stream of tokens.
 /// It is used for turning the tokens into a ast
 pub struct Parser {
-    current_position: usize,
-    tokens: Vec<Token>,
-    prev_token: Option<Token>,
+    pub current_position: usize,
+    pub tokens: Vec<Token>,
+    pub prev_token: Option<Token>,
 }
 
 /// Using the Iterator trait for the parser
@@ -48,13 +48,17 @@ pub trait WalkParser {
     /// # Example
     ///
     /// ```rust
-    ///  let parser = Parser {
+    ///  use lepa::lexer::lexer::{Token, Lexer, TokenType};
+    ///  use lepa::parser::Parser;
+    ///  use lepa::parser::WalkParser;
+    ///
+    ///  let mut parser = Parser {
     ///     current_position:0,
-    ///     tokens: vec![..,.., Token { .., token_type:TokenType::OpenBrace }],
+    ///     tokens: vec![Token { value: "".into(), token_type:TokenType::OpenBrace, line:0 }, Token { value: "".into(), token_type:TokenType::OpenBrace, line:0 }, Token { value: "".into(), token_type:TokenType::OpenBrace, line:0 }],
     ///     prev_token:None
-    ///  }
+    ///  };
     ///  let token:Option<Token> = parser.peak_nth(2);
-    ///  assert_eq!(token, Some(Token{ .., TokenType::OpenBrace}));
+    ///  assert_eq!(token, Some(Token { value:"".into(),  token_type:TokenType::OpenBrace, line:0}));
     /// ```
     ///
     /// **This wont advance the current_position therefore not "consuming" the tokens**
@@ -65,14 +69,18 @@ pub trait WalkParser {
     /// # Example
     ///
     /// ``` rust
+    ///  use lepa::lexer::lexer::{Token, Lexer, TokenType, KeyWords};
+    ///  use lepa::parser::Parser;
+    ///  use lepa::parser::WalkParser;
     ///
-    ///  let parser = Parser {
-    ///     current_position: 0,
-    ///     tokens: vec![Token {  token_type:TokenType::Identifier }, Token {  token_type:TokenType::OpenBrace}, Token { .., token_type:TokenType::CloseBrace }],
-    ///     prev_token:None
-    ///  }
-    ///  let token:Option<Token> = parser.peak_nth(2);
-    ///  assert_eq!(token, Some(vec![ Token{.. , TokenType::Identifier }, Token{.. , TokenType::OpenBrace} ]));
+    ///  let mut parser = Token::lex(include_str!("../sample_code/main.lp").to_string());
+    ///  let mut parser:Parser = Parser {
+    ///  current_position:0,
+    ///  tokens:parser,
+    ///  prev_token:None 
+    ///  };
+    ///  let token:Option<Vec<Token>> = parser.peak_nth_all(2);
+    ///  assert_eq!(token, Some(vec![Token { token_type: TokenType::Keyword(KeyWords::Let), value: "let".into(), line: 0 }, Token { token_type: TokenType::Identifier, value: "main".into(), line: 0 }]));
     ///  
     /// ```
     ///
@@ -83,7 +91,7 @@ pub trait WalkParser {
     /// # Example
     ///
     /// ```Rust
-    /// let parser = Parser::new(tokens);
+    /// let mut parser = Token::lex(include_str!("../sample_code/main.lp").to_string());
     ///
     /// // We move the cursor one position up and get the token
     /// let next:Option<Token> = parser.next();
@@ -96,13 +104,12 @@ pub trait WalkParser {
     ///     }
     ///     None => {}
     ///}
-    /// // Turns out we need to 
     /// ```
     ///
     /// **This function will panic if you try to advance the token back to a negative number since
     /// n is a usize and current_position is a usize**
-    /// 
-    fn advance_back(&mut self, n:usize);
+    ///
+    fn advance_back(&mut self, n: usize);
 }
 
 impl WalkParser for Parser {
@@ -112,7 +119,7 @@ impl WalkParser for Parser {
     fn peak_nth_all(&mut self, n: usize) -> Option<Vec<Token>> {
         return Some(self.tokens[self.current_position..(self.current_position + n)].to_vec());
     }
-    fn advance_back(&mut self, n:usize) {
+    fn advance_back(&mut self, n: usize) {
         self.current_position -= n;
     }
 }
