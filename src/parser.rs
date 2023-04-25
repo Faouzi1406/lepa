@@ -1,4 +1,4 @@
-use crate::lexer::lexer::{Token, TokenType};
+use crate::{lexer::lexer::{Token, TokenType}, ast::Ast};
 
 /// Parser struct
 ///
@@ -8,6 +8,17 @@ pub struct Parser {
     pub current_position: usize,
     pub tokens: Vec<Token>,
     pub prev_token: Option<Token>,
+}
+
+impl Parser {
+    /// Create a new parser struct.
+    pub fn new(tokens: Vec<Token>) -> Parser {
+        Parser {
+            current_position: 0,
+            tokens,
+            prev_token: None,
+        }
+    }
 }
 
 /// Using the Iterator trait for the parser
@@ -106,7 +117,7 @@ pub trait WalkParser {
     ///  let token:Option<Vec<Token>> = parser.up_until_token(TokenType::OpenBrace);
     /// ```
     ///
-    /// **This will advance the current_position therefore not "consume" the tokens**
+    /// **This will advance the current_position therefore "consume" the tokens**
     fn up_until_token(&mut self, token: TokenType) -> Option<Vec<Token>>;
     /// Advace back the current position, alows walking back into the token stream.
     ///
@@ -134,6 +145,7 @@ pub trait WalkParser {
     fn advance_back(&mut self, n: usize);
 }
 
+
 impl WalkParser for Parser {
     fn peak_nth(&mut self, i: usize) -> Option<Token> {
         Some(self.tokens.get(self.current_position + i)?.clone())
@@ -159,4 +171,9 @@ impl WalkParser for Parser {
         }
         return None;
     }
+}
+
+/// The parse trait, it uses the parser struct to parse the tokens into a [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
+trait Parse {
+    // pub fn parse() -> Result<Ast, >
 }

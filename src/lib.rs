@@ -3,6 +3,7 @@ pub mod compiler;
 pub mod cursor;
 pub mod lexer;
 pub mod parser;
+pub mod errors;
 
 // Test the lexer with the given input
 #[cfg(test)]
