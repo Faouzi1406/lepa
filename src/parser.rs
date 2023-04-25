@@ -173,6 +173,6 @@ impl WalkParser for Parser {
 }
 
 /// The parse trait, it uses the parser struct to parse the tokens into a [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
-trait Parse {
+pub trait Parse {
     //pub fn parse() -> Result<Ast, >
 }
