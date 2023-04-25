@@ -145,7 +145,6 @@ pub trait WalkParser {
     fn advance_back(&mut self, n: usize);
 }
 
-
 impl WalkParser for Parser {
     fn peak_nth(&mut self, i: usize) -> Option<Token> {
         Some(self.tokens.get(self.current_position + i)?.clone())
@@ -175,5 +174,5 @@ impl WalkParser for Parser {
 
 /// The parse trait, it uses the parser struct to parse the tokens into a [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 trait Parse {
-    // pub fn parse() -> Result<Ast, >
+    //pub fn parse() -> Result<Ast, >
 }

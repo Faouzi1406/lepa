@@ -1,5 +1,7 @@
 use std::fmt::Debug;
 
+use colored::Colorize;
+
 /// The logger struct, this can be used to log events to the terminal.
 ///
 /// It contains some metadata used for logging, in this case the LogLevel.
@@ -42,10 +44,7 @@ pub enum LogLevels {
 /// terminal.
 ///
 /// T in this case would then be the item being logged.
-pub trait Log<T>
-where
-    T: Debug,
-{
+pub trait Log {
     /// Create a new Logger struct which can be used to log.
     fn new(level: LogLevels) -> Self;
     /// Info logs a new message to the terminal,  it will not be logged if the loglevel is any
@@ -59,7 +58,7 @@ where
     /// let log = Logger::new(LogLevels::Warning);
     /// log.info("This is a info log"); // This will NOT be printed to terminal
     /// ```
-    fn info(&self, input: &T);
+    fn info<T: Debug>(&self, input: &T);
     /// warning logs a new warning message to the terminal, if the LogLevel is anyhigher then
     /// warning it wont be logged.
     ///
@@ -74,7 +73,7 @@ where
     /// let log = Logger::new(LogLevels::Error);
     /// log.info("This is a info log"); // This will NOT be printed to terminal
     /// ```
-    fn warning(&self, input: &T);
+    fn warning<T: Debug>(&self, input: &T);
     /// error logs a new error message to the terminal.
     /// Error logs are toplevel meaning they can't and wont be ignored.
     ///
@@ -89,32 +88,32 @@ where
     /// let log = Logger::new(LogLevels::Error);
     /// log.error("This is a info log"); // This will be printed to terminal
     /// ```
-    fn error(&self, input: &T);
+    fn error<T: Debug>(&self, input: &T);
 }
 
-impl<T: Debug> Log<T> for Logger {
+impl Log for Logger {
     fn new(level: LogLevels) -> Self {
         Self(level)
     }
-    fn info(&self, input: &T) {
+    fn info<T: Debug>(&self, input: &T) {
         match self.0 {
             LogLevels::Info => {
-                println!("[INFO] {:#?}", input);
+                println!("{} {:#?}", "[INFO]".blue().bold(), input)
             }
             _ => (),
         }
     }
-    fn warning(&self, input: &T) {
+    fn warning<T: Debug>(&self, input: &T) {
         match &self.0 {
             LogLevels::Info | LogLevels::Warning => {
-                println!("[WARNING] {:#?}", input)
+                println!("{} {:#?}",  "[WARNING]".yellow().bold(), input)
             }
             _ => (),
         }
     }
-    fn error(&self, input: &T) {
+    fn error<T: Debug>(&self, input: &T) {
         match &self.0 {
-            _ => println!("[ERROR] {:#?}", input)
+            _ => println!("{} {:#?}", "[Error]".red().bold(), input),
         }
     }
 }
