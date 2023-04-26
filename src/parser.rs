@@ -1,4 +1,8 @@
-use crate::{lexer::lexer::{Token, TokenType}, ast::Ast};
+use crate::{
+    ast::{Ast, Type, TypeVar, VarBuilder, Variable},
+    errors::error::{BuildError, ErrorBuilder},
+    lexer::lexer::{KeyWords, Operators, Token, TokenType},
+};
 
 /// Parser struct
 ///
@@ -147,7 +151,7 @@ pub trait WalkParser {
 
 impl WalkParser for Parser {
     fn peak_nth(&mut self, i: usize) -> Option<Token> {
-        Some(self.tokens.get(self.current_position + i)?.clone())
+        return Some(self.tokens.get(self.current_position + i)?.clone());
     }
     fn peak_nth_all(&mut self, n: usize) -> Option<Vec<Token>> {
         return Some(self.tokens[self.current_position..(self.current_position + n)].to_vec());
@@ -159,11 +163,11 @@ impl WalkParser for Parser {
         let mut tokens = Vec::new();
         while let Some(token) = self.next() {
             match token {
+                token if token.token_type == t => {
+                    tokens.push(token);
+                    return Some(tokens);
+                }
                 token => {
-                    if token.token_type == t {
-                        tokens.push(token);
-                        return Some(tokens);
-                    }
                     tokens.push(token);
                 }
             }
@@ -174,7 +178,95 @@ impl WalkParser for Parser {
 
 /// The parse trait, it uses the parser struct to parse the tokens into a [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 pub trait Parse {
-    // Todo: build the error trait, this way I can use the error trait to return dynamic errors
-    //based on parsing
-    //pub fn parse() -> Result<Ast, >
+    /// The main parsing function.
+    ///
+    /// It converts the tokens into a ast
+    fn parse(&mut self) -> Result<Ast, ErrorBuilder>;
+}
+
+trait ParseTokens {
+    fn parse_var(&mut self) -> Result<Variable, ErrorBuilder>;
+}
+
+impl Parse for Parser {
+    fn parse(&mut self) -> Result<Ast, ErrorBuilder> {
+        let mut ast = Ast::new(Type::Program);
+        while let Some(token) = self.next() {
+            match token.token_type {
+                // Parsing variables starting with let
+                TokenType::Keyword(KeyWords::Let) => {
+                    let var = self.parse_var()?;
+                    ast.body.push(Ast::new(Type::Variable(var)));
+                }
+                _ => todo!("Haven't added parsing for these tokens yet"),
+            }
+        }
+        return Ok(ast);
+    }
+}
+
+impl ParseTokens for Parser {
+    fn parse_var(&mut self) -> Result<Variable, ErrorBuilder> {
+        // This function would never be called before there is a prev_token therefore we can unwrap
+        // it
+        let prev = self.prev_token.clone().unwrap();
+        let mut var = Variable::new();
+        // Assigning the line of the variable early so It can be used for errors.
+        var.line(prev.line);
+        // Retrieve all the tokens up untile the semicolon.
+        // Considering the end of every variable must be a SemiColon
+        let end_of_var = self.up_until_token(TokenType::SemiColon);
+        match end_of_var {
+            Some(tokens) => {
+                for token in tokens {
+                    match token.token_type {
+                        TokenType::Identifier => {
+                            // We assign the name and use the question mark operator which will
+                            // force returning the assign error if there is one.
+                            var.name(token.value)?;
+                        }
+                        TokenType::String => {
+                            // We assign the type and use the question mark operator which will
+                            // force returning the assign error if there is one.
+                            var.type_(TypeVar::String(token.value))?;
+                        }
+                        TokenType::Number => {
+                            // We assign the type and use the question mark operator which will
+                            // force returning the assign error if there is one.
+                            var.type_(TypeVar::parse_number(token.value))?;
+                        }
+                        TokenType::Operator(Operators::Eq) => {
+                            // Ofcourse we shouldn't  just think that it wil always be as string or
+                            // a number for now we do but this will change
+                        }
+                        TokenType::SemiColon => {
+                            return Ok(var);
+                        }
+                        // If we find any value that shouldn't be there we return and error
+                        _ => {
+                            return Err(ErrorBuilder::new()
+                                .message(format!(
+                                    "Invalid syntax found {} while parsing variable",
+                                    token.value
+                                ))
+                                .build_error())
+                        }
+                    }
+                }
+                return Ok(var);
+            }
+            None => Err(ErrorBuilder::new()
+                .message(format!(
+                    "Found a variable without and ending semicolon {}",
+                    prev.value
+                ))
+                .line(prev.line)
+                .file_name("todo:.rs")
+                .helper(format!(
+                    "Consider adding a semicolon: let {} = var ;",
+                    prev.value
+                ))
+                .build_error()),
+        }
+    }
 }

@@ -11,7 +11,7 @@ use std::fmt::Display;
 /// - Helper : A help message explaining how the error could be resolved.
 ///
 /// - Line : The line on which the error took place
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ErrorBuilder {
     file_name:String,
     message_:String,
@@ -42,7 +42,10 @@ pub trait BuildError {
     fn message(&mut self, mess:impl AsRef<str>)-> &mut Self;
     fn helper(&mut self, help_message:impl AsRef<str>)-> &mut Self;
     fn line(&mut self, line:usize)-> &mut Self;
+    /// Used to build the error into a string
     fn build(&mut self) -> String;
+    /// Used to build the error into a non mutuable version of the error
+    fn build_error(&mut self) -> Self;
 }
 
 impl BuildError for ErrorBuilder {
@@ -76,6 +79,9 @@ impl BuildError for ErrorBuilder {
     }
     fn build(&mut self) -> String {
         format!("{self}")
+    }
+    fn build_error(&mut self) -> Self {
+        self.clone()
     }
 }
 

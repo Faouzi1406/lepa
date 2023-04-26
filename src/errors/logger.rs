@@ -143,17 +143,19 @@ pub fn log_any<T: Debug>(type_log: impl AsRef<str>, message: &T) {
 ///
 /// # Example
 /// ```rust
+/// use lepa::errors::logger::log_any;
+/// use lepa::logme;
 /// // The first item is considered to be the type and the rest are the messages that get printed
 /// logme!("error", "this is one message", "this is another message", vec![1,2,3,4,5], "etc...");
 /// ```
 #[macro_export]
 macro_rules! logme {
     ($type:expr ,$message:expr) => {
+        use lepa::errors::logger::log_any;
         log_any($type,&$message);
     };
 
     ($type:expr,$($message:expr),*) => {
-        use lepa::errors::logger::log_any;
         {
             $(
                 log_any($type,&$message);
