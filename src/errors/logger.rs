@@ -98,7 +98,7 @@ impl Log for Logger {
     fn info<T: Debug>(&self, input: &T) {
         match self.0 {
             LogLevels::Info => {
-                println!("{} {:#?}", "[INFO]".blue().bold(), input)
+                println!("{} {:?}", "[INFO]".blue().bold(), input)
             }
             _ => (),
         }
@@ -106,14 +106,58 @@ impl Log for Logger {
     fn warning<T: Debug>(&self, input: &T) {
         match &self.0 {
             LogLevels::Info | LogLevels::Warning => {
-                println!("{} {:#?}",  "[WARNING]".yellow().bold(), input)
+                println!("{} {:?}", "[WARNING]".yellow().bold(), input)
             }
             _ => (),
         }
     }
     fn error<T: Debug>(&self, input: &T) {
         match &self.0 {
-            _ => println!("{} {:#?}", "[Error]".red().bold(), input),
+            _ => println!("{} {:?}", "[Error]".red().bold(), input),
         }
     }
+}
+
+/// The log any function will log any message to the terminal
+/// Meaning the first type_log could be any string type, although info, warning and error get a
+/// different output message.
+///
+/// This is mainly used for the logme macro, allowing you to log one type with multiple messages
+/// the terminal
+pub fn log_any<T: Debug>(type_log: impl AsRef<str>, message: &T) {
+    match type_log.as_ref().to_lowercase().as_str() {
+        "info" => {
+            println!("{} {:?}", "[INFO]".blue().bold(), message);
+        }
+        "warning" => {
+            println!("{} {:?}", "[WARNING]".yellow().bold(), message);
+        }
+        "error" => {
+            println!("{} {:?}", "[ERROR]".red().bold(), message);
+        }
+        _ => println!("{} {:?}", "[MESSAGE]".bright_yellow().bold(), message),
+    }
+}
+
+/// The logme! macro used to log any type of log with multiple messages to the terminal.
+///
+/// # Example
+/// ```rust
+/// // The first item is considered to be the type and the rest are the messages that get printed
+/// logme!("error", "this is one message", "this is another message", vec![1,2,3,4,5], "etc...");
+/// ```
+#[macro_export]
+macro_rules! logme {
+    ($type:expr ,$message:expr) => {
+        log_any($type,&$message);
+    };
+
+    ($type:expr,$($message:expr),*) => {
+        use lepa::errors::logger::log_any;
+        {
+            $(
+                log_any($type,&$message);
+            )*
+        }
+    };
 }

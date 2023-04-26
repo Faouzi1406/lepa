@@ -174,5 +174,7 @@ impl WalkParser for Parser {
 
 /// The parse trait, it uses the parser struct to parse the tokens into a [AST](https://en.wikipedia.org/wiki/Abstract_syntax_tree).
 pub trait Parse {
+    // Todo: build the error trait, this way I can use the error trait to return dynamic errors
+    //based on parsing
     //pub fn parse() -> Result<Ast, >
 }
