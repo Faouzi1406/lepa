@@ -17,7 +17,7 @@ impl TypeVar {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Variable {
     pub name: String,
     pub type_: TypeVar,

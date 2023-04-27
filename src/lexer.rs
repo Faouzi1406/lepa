@@ -36,6 +36,7 @@ pub mod lexer {
         Bool,
         While,
         For,
+        Return
     }
 
     /// All the operators
@@ -252,6 +253,7 @@ pub mod lexer {
                 "else" => Some(Token::new(TokenType::Keyword(KeyWords::Else), "else", l)),
                 "while" => Some(Token::new(TokenType::Keyword(KeyWords::While), "while", l)),
                 "for" => Some(Token::new(TokenType::Keyword(KeyWords::For), "for", l)),
+                "return" =>  Some(Token::new(TokenType::Keyword(KeyWords::Return), "return", l)),
                 value if value == "true" || value == "false" => {
                     Some(Token::new(TokenType::Keyword(KeyWords::Bool), value, l))
                 }
@@ -264,7 +266,7 @@ pub mod lexer {
         fn lex(input: String) -> Vec<Token> {
             let mut vec = Vec::new();
             let mut cursor = Cursor::new(input);
-            let mut line = 0;
+            let mut line = 1;
             while let Some(token) = cursor.next() {
                 match token {
                     '\n' => {
@@ -276,8 +278,8 @@ pub mod lexer {
                     '+' => vec.push(Token::new(TokenType::Plus, ",", line)),
                     '-' => vec.push(Token::new(TokenType::Min, ",", line)),
                     '.' => vec.push(Token::new(TokenType::Dot, ".", line)),
-                    '}' => vec.push(Token::new(TokenType::CloseBrace, "}", line)),
-                    '{' => vec.push(Token::new(TokenType::OpenBrace, "{", line)),
+                    '}' => vec.push(Token::new(TokenType::CloseBracket, "}", line)),
+                    '{' => vec.push(Token::new(TokenType::OpenBracket, "{", line)),
                     '(' => vec.push(Token::new(TokenType::OpenBrace, "(", line)),
                     ')' => vec.push(Token::new(TokenType::CloseBrace, ")", line)),
                     ':' => vec.push(Token::new(TokenType::Colon, ":", line)),

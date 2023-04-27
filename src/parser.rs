@@ -1,8 +1,8 @@
 use crate::{
-    ast::{Ast, Type, TypeVar, VarBuilder, Variable},
+    ast::{self, Ast, Type, TypeVar, VarBuilder, Variable},
     errors::{
         error::{BuildError, ErrorBuilder},
-        error_messages::non_ending_variable,
+        error_messages::{invalid_function_syntax, non_ending_variable, invalid_function_body_syntax},
     },
     lexer::lexer::{KeyWords, Operators, Token, TokenType},
 };
@@ -191,6 +191,8 @@ pub trait Parse {
 trait ParseTokens {
     fn parse_var(&mut self) -> Result<Variable, ErrorBuilder>;
     fn parse_block(&mut self) -> Result<Ast, ErrorBuilder>;
+    fn parse_fn(&mut self) -> Result<Ast, ErrorBuilder>;
+    fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder>;
 }
 
 impl Parse for Parser {
@@ -203,8 +205,14 @@ impl Parse for Parser {
                     let var = self.parse_var()?;
                     ast.body.push(Ast::new(Type::Variable(var)));
                 }
-                TokenType::OpenBrace => {
+                TokenType::Keyword(KeyWords::Fn) => {
+                    ast.body.push(self.parse_fn()?);
+                }
+                TokenType::OpenBracket => {
                     ast.body.push(self.parse_block()?);
+                }
+                TokenType::Comment => {
+                    continue;
                 }
                 _ => todo!("Haven't added parsing for these tokens yet"),
             }
@@ -268,7 +276,6 @@ impl ParseTokens for Parser {
             None => Err(non_ending_variable(prev.value, prev.line)),
         }
     }
-
     fn parse_block(&mut self) -> Result<Ast, ErrorBuilder> {
         let mut ast = Ast::new(Type::Block);
         while let Some(token) = self.next() {
@@ -277,19 +284,80 @@ impl ParseTokens for Parser {
                     let ast_var = Ast::new(Type::Variable(self.parse_var()?));
                     ast.body.push(ast_var);
                 }
-                TokenType::OpenBrace =>  {
+                TokenType::Keyword(KeyWords::Fn) => {}
+                TokenType::OpenBracket => {
                     // Recursion
                     //
                     // Imagine me writing a entire loop right here that does the exact same
                     // as what this function is doing.... pleass don't ever do that. :)
                     ast.body.push(self.parse_block()?);
                 }
-                TokenType::CloseBrace =>  {
+                TokenType::CloseBracket => {
                     return Ok(ast);
                 }
-                _ => todo!("Add parsing for these tokens")
+                token => todo!("Add parsing for these tokens {:#?}", token),
             }
         }
+        Ok(ast)
+    }
+    fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder> {
+        let prev = self.prev_token.clone().unwrap();
+        let Some(tokens_until_close) = self.up_until_token(TokenType::CloseBrace) else {
+            return Err(invalid_function_syntax(prev.line))
+        };
+
+        let mut args = Vec::new();
+        let mut current_var = Variable::new();
+
+        for token in tokens_until_close {
+            match token.token_type {
+                TokenType::Comma => {
+                    args.push(current_var.clone());
+                    current_var.name = "".into();
+                }
+                TokenType::Identifier => {
+                    current_var.name(token.value)?;
+                }
+                TokenType::CloseBrace => {
+                    args.push(current_var.clone());
+                    return Ok(args);
+                }
+                TokenType::OpenBrace => {
+                    continue;
+                }
+                _ => return Err(invalid_function_syntax(prev.line))
+            }
+        }
+        return Ok(args);
+    }
+
+    fn parse_fn(&mut self) -> Result<Ast, ErrorBuilder> {
+        let prev = self.prev_token.clone().unwrap();
+
+        let Some(next) = self.next() else {
+            println!("Something went wrong");
+            return Err(invalid_function_syntax(prev.line));
+        };
+        if next.token_type != TokenType::Identifier {
+            return Err(invalid_function_syntax(prev.line));
+        }
+
+        let args = self.parse_args()?;
+        let Some(body) = self.next() else {
+            return Err(invalid_function_syntax(prev.line));
+        };
+
+        if body.token_type != TokenType::OpenBracket {
+            return Err(invalid_function_body_syntax(next.value, prev.line));
+        }
+
+        let body = Some(Box::from(self.parse_block()?));
+
+        let ast = Ast::new(Type::Function(ast::Func {
+            name: next.value,
+            args,
+            body,
+        }));
         Ok(ast)
     }
 }
