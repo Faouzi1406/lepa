@@ -19,4 +19,3 @@ Everything here if ofcourse going to get improved over times.
 
 - [x] Added parsing for functions
 
-- [x] (great_song_btw)[https://www.youtube.com/watch?v=7W9IOhk1-z4&list=RDP29Fx9Lwchk&index=12]

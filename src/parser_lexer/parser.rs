@@ -70,9 +70,9 @@ pub trait WalkParser {
     /// # Example
     ///
     /// ```rust
-    ///  use lepa::lexer::lexer::{Token, Lexer, TokenType};
-    ///  use lepa::parser::Parser;
-    ///  use lepa::parser::WalkParser;
+    ///  use lepa::parser_lexer::lexer::lexer::{Token, Lexer, TokenType};
+    ///  use lepa::parser_lexer::parser::Parser;
+    ///  use lepa::parser_lexer::parser::WalkParser;
     ///
     ///  let mut parser = Parser {
     ///     current_position:0,
@@ -91,11 +91,11 @@ pub trait WalkParser {
     /// # Example
     ///
     /// ``` rust
-    ///  use lepa::lexer::lexer::{Token, Lexer, TokenType, KeyWords};
-    ///  use lepa::parser::Parser;
-    ///  use lepa::parser::WalkParser;
+    ///  use lepa::parser_lexer::lexer::lexer::{Token, Lexer, TokenType, KeyWords};
+    ///  use lepa::parser_lexer::parser::Parser;
+    ///  use lepa::parser_lexer::parser::WalkParser;
     ///
-    ///  let mut parser = Token::lex(include_str!("../sample_code/main.lp").to_string());
+    ///  let mut parser = Token::lex(include_str!("../../sample_code/main.lp").to_string());
     ///  let mut parser:Parser = Parser {
     ///  current_position:0,
     ///  tokens:parser,
@@ -115,11 +115,11 @@ pub trait WalkParser {
     /// # Example
     ///
     /// ``` rust
-    ///  use lepa::lexer::lexer::{Token, Lexer, TokenType, KeyWords};
-    ///  use lepa::parser::Parser;
-    ///  use lepa::parser::WalkParser;
+    ///  use lepa::parser_lexer::lexer::lexer::{Token, Lexer, TokenType, KeyWords};
+    ///  use lepa::parser_lexer::parser::Parser;
+    ///  use lepa::parser_lexer::parser::WalkParser;
     ///
-    ///  let mut parser = Token::lex(include_str!("../sample_code/main.lp").to_string());
+    ///  let mut parser = Token::lex(include_str!("../../sample_code/main.lp").to_string());
     ///  let mut parser:Parser = Parser {
     ///  current_position:0,
     ///  tokens:parser,

@@ -1,6 +1,6 @@
 use lepa::{
-    errors::{logger::{Log, LogLevels, Logger}, error::{ErrorBuilder, BuildError}},
-    parser_lexer::lexer::lexer::{Lexer, Token}, logme, parser_lexer::parser::{Parser, Parse},
+    errors::{logger::{Log}, error::{BuildError}},
+    parser_lexer::lexer::lexer::{Lexer, Token}, parser_lexer::parser::{Parser, Parse},
 };
 
 fn main() {
