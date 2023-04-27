@@ -191,9 +191,48 @@ pub trait Parse {
 }
 
 trait ParseTokens {
+    /// Parsing variables,
+    ///
+    /// Currently it parses: 
+    ///
+    /// It doesn't need the let token and expects it to not be there, this is because the main
+    /// parse function consumes it.
+    ///
+    /// It also expects there to be a semicolon at the end of every new variable.
+    ///
+    /// - some = "wow";
+    /// - some = 1;
+    ///
+    /// It doesn't support:
+    ///
+    /// - some = some; 
     fn parse_var(&mut self) -> Result<Variable, ErrorBuilder>;
     fn parse_block(&mut self) -> Result<Ast, ErrorBuilder>;
+    /// Parsing blocks 
+    ///
+    /// Blocks can be considered as anything that starts with a '{' and end withs a '}'.
+    /// Nested blocks are also supported.
+    ///
+    /// # Example
+    ///
+    /// {
+    ///  let hello ="world";
+    ///  {
+    ///   let number = 1;
+    ///  }
+    /// }
     fn parse_fn(&mut self) -> Result<Ast, ErrorBuilder>;
+    /// Parsing arguments 
+    ///
+    /// This could be anything inbetween a OpenBrace and CloseBrace:
+    ///
+    /// # Examples 
+    ///
+    /// fn some ( arg1, arg2, arg3 )
+    ///
+    /// some( arg1, arg2, arg3 )
+    ///
+    /// ( arg1, arg2, arg3 )
     fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder>;
 }
 
