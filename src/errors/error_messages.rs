@@ -1,6 +1,6 @@
 use colored::Colorize;
 
-use crate::lexer::lexer::Token;
+use crate::parser_lexer::lexer::lexer::Token;
 
 use super::error::{BuildError, ErrorBuilder};
 

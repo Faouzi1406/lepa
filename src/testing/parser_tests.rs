@@ -2,8 +2,8 @@
 pub mod test_parser {
     use crate::{
         ast::{AstVar, TypeVar, Type},
-        lexer::lexer::{KeyWords, Lexer, Operators, Token, TokenType},
-        parser::{Parse, Parser, WalkParser},
+        parser_lexer::lexer::lexer::{KeyWords, Lexer, Operators, Token, TokenType},
+        parser_lexer::parser::{Parse, Parser, WalkParser},
     };
 
     #[test]
@@ -53,7 +53,7 @@ pub mod test_parser {
         let tokens = Token::lex(input);
         let mut parse = Parser::new(tokens);
         let parse_until =
-            parse.up_until_token(crate::lexer::lexer::TokenType::Operator(Operators::EqEq));
+            parse.up_until_token(crate::parser_lexer::lexer::lexer::TokenType::Operator(Operators::EqEq));
 
         // Check the amount of tokens
         assert_eq!(parse_until.clone().unwrap().len(), 2);

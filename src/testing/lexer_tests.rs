@@ -2,7 +2,7 @@
 pub mod test_lexer {
     #[cfg(test)]
     pub mod test_lexer_operators {
-        use crate::lexer::lexer::{Lexer, Operators, Token, TokenType};
+        use crate::parser_lexer::lexer::lexer::{Lexer, Operators, Token, TokenType};
 
         #[test]
         fn test_eq_operators() {
@@ -40,7 +40,7 @@ pub mod test_lexer {
 
     #[cfg(test)]
     pub mod test_strings {
-        use crate::lexer::lexer::{Lexer, Token, TokenType};
+        use crate::parser_lexer::lexer::lexer::{Lexer, Token, TokenType};
 
         #[test]
         fn test_string() {
@@ -56,7 +56,7 @@ pub mod test_lexer {
 
     #[cfg(test)]
     pub mod test_numbers {
-        use crate::lexer::lexer::{Lexer, Token, TokenType};
+        use crate::parser_lexer::lexer::lexer::{Lexer, Token, TokenType};
 
         #[test]
         fn test_numn() {
@@ -72,7 +72,7 @@ pub mod test_lexer {
 
     #[cfg(test)]
     pub mod test_identifiers {
-        use crate::lexer::lexer::{Lexer, Token, TokenType};
+        use crate::parser_lexer::lexer::lexer::{Lexer, Token, TokenType};
 
         #[test]
         fn test_identifier() {
@@ -93,7 +93,7 @@ pub mod test_lexer {
 
     #[cfg(test)]
     pub mod test_keywords {
-        use crate::lexer::lexer::{KeyWords, Lexer, Token, TokenType};
+        use crate::parser_lexer::lexer::lexer::{KeyWords, Lexer, Token, TokenType};
 
         #[test]
         fn test_if_else() {

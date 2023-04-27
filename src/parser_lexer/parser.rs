@@ -7,7 +7,7 @@ use crate::{
             invalid_var_syntax_token, non_ending_variable,
         },
     },
-    lexer::lexer::{KeyWords, Operators, Token, TokenType},
+    parser_lexer::lexer::lexer::{KeyWords, Operators, Token, TokenType},
 };
 
 /// Parser struct
@@ -463,7 +463,6 @@ impl ParseTokens for Parser {
                 _ => return Err(invalid_var_syntax_token(token)),
             }
         }
-        println!("{:#?}", values);
         return Err(invalid_arr_no_end(line));
     }
 }
