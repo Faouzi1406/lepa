@@ -4,8 +4,7 @@ use lepa::{
 };
 
 fn main() {
-    let lexer = Token::lex(include_str!("../sample_code/testing/test_functions.lp").to_string());
-    let logger = Logger::new(LogLevels::Info);
+    let lexer = Token::lex(include_str!("../sample_code/testing/var.lp").to_string());
     let parse = Parser::new(lexer).parse();
     println!("{:#?}", parse);
 }

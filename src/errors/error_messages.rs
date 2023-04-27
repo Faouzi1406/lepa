@@ -1,5 +1,7 @@
 use colored::Colorize;
 
+use crate::lexer::lexer::Token;
+
 use super::error::{BuildError, ErrorBuilder};
 
 /// The error message for a non ending variable
@@ -69,5 +71,27 @@ pub fn invalid_function_body_syntax(name: String, line: usize) -> ErrorBuilder {
             " <<body>> ".yellow().bold(),
             "}".blue().bold()
         ))
+        .build_error()
+}
+
+pub fn invalid_var_syntax_token(token: Token) -> ErrorBuilder {
+    ErrorBuilder::new()
+        .message(format!(
+            "Invalid syntax found {} while parsing variable",
+            token.value
+        ))
+        .line(token.line)
+        .file_name("todo:")
+        .build_error()
+}
+
+pub fn invalid_arr_no_end(line: usize) -> ErrorBuilder {
+    ErrorBuilder::new()
+        .message(format!(
+            "Invalid syntax found for array",
+        ))
+        .helper(format!("consider adding a end to the array {}", "]".yellow().bold()))
+        .line(line)
+        .file_name("todo:")
         .build_error()
 }

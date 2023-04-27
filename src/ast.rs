@@ -4,6 +4,7 @@ use crate::errors::error::{BuildError, ErrorBuilder};
 pub enum TypeVar {
     Number(i32),
     String(String),
+    Arr { values: Vec<TypeVar>},
     None,
 }
 

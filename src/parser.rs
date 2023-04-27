@@ -1,9 +1,10 @@
 use crate::{
     ast::{self, Ast, Type, TypeVar, VarBuilder, Variable},
     errors::{
-        error::{BuildError, ErrorBuilder},
+        error::ErrorBuilder,
         error_messages::{
-            invalid_function_body_syntax, invalid_function_syntax_missing_id, non_ending_variable,
+            invalid_arr_no_end, invalid_function_body_syntax, invalid_function_syntax_missing_id,
+            invalid_var_syntax_token, non_ending_variable,
         },
     },
     lexer::lexer::{KeyWords, Operators, Token, TokenType},
@@ -13,6 +14,7 @@ use crate::{
 ///
 /// Consumes the stream of tokens.
 /// It is used for turning the tokens into a ast
+#[derive(Debug)]
 pub struct Parser {
     pub current_position: usize,
     pub tokens: Vec<Token>,
@@ -248,6 +250,7 @@ trait ParseTokens {
     ///
     /// ( arg1, arg2, arg3 )
     fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder>;
+    fn parse_array(&mut self) -> Result<TypeVar, ErrorBuilder>;
 }
 
 impl Parse for Parser {
@@ -263,7 +266,7 @@ impl Parse for Parser {
                 TokenType::Keyword(KeyWords::Fn) => {
                     ast.body.push(self.parse_fn()?);
                 }
-                TokenType::OpenBracket => {
+                TokenType::OpenCurlyBracket => {
                     ast.body.push(self.parse_block()?);
                 }
                 TokenType::Comment => {
@@ -289,7 +292,8 @@ impl ParseTokens for Parser {
         let end_of_var = self.up_until_token(TokenType::SemiColon);
         match end_of_var {
             Some(tokens) => {
-                for token in tokens {
+                let mut parser = Parser::new(tokens);
+                while let Some(token) = parser.next() {
                     match token.token_type {
                         TokenType::Identifier => {
                             // We assign the name and use the question mark operator which will
@@ -306,6 +310,9 @@ impl ParseTokens for Parser {
                             // force returning the assign error if there is one.
                             var.type_(TypeVar::parse_number(token.value))?;
                         }
+                        TokenType::OpenBracket => {
+                            var.type_(parser.parse_array()?)?;
+                        }
                         TokenType::Operator(Operators::Eq) => {
                             // Ofcourse we shouldn't  just think that it wil always be as string or
                             // a number for now we do but this will change
@@ -314,16 +321,7 @@ impl ParseTokens for Parser {
                             return Ok(var);
                         }
                         // If we find any token that shouldn't be there we return and error
-                        _ => {
-                            return Err(ErrorBuilder::new()
-                                .message(format!(
-                                    "Invalid syntax found {} while parsing variable",
-                                    token.value
-                                ))
-                                .line(token.line)
-                                .file_name("todo:")
-                                .build_error())
-                        }
+                        _ => return Err(invalid_var_syntax_token(token)),
                     }
                 }
                 return Ok(var);
@@ -344,20 +342,20 @@ impl ParseTokens for Parser {
                 TokenType::Keyword(KeyWords::Fn) => {
                     ast.body.push(self.parse_fn()?);
                 }
-                TokenType::OpenBracket => {
+                TokenType::OpenCurlyBracket => {
                     // Recursion
                     //
                     // Imagine me writing a entire loop right here that does the exact same
                     // as what this function is doing.... pleass don't ever do that. :)
                     ast.body.push(self.parse_block()?);
                 }
-                TokenType::CloseBracket => {
+                TokenType::CloseCurlyBracket => {
                     return Ok(ast);
                 }
                 token => todo!("Add parsing for these tokens {:#?}", token),
             }
         }
-        return Err(invalid_function_body_syntax("".to_string(), line))
+        return Err(invalid_function_body_syntax("".to_string(), line));
     }
     fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
@@ -386,6 +384,9 @@ impl ParseTokens for Parser {
                 TokenType::OpenBrace => {
                     continue;
                 }
+                TokenType::Comment => {
+                    continue;
+                }
                 // todo: Invalid argument token error
                 _ => return Err(invalid_function_syntax_missing_id(prev.line)),
             }
@@ -407,7 +408,7 @@ impl ParseTokens for Parser {
             return Err(invalid_function_syntax_missing_id(prev.line));
         };
 
-        if body.token_type != TokenType::OpenBracket {
+        if body.token_type != TokenType::OpenCurlyBracket {
             return Err(invalid_function_body_syntax(next.value, prev.line));
         }
 
@@ -418,6 +419,51 @@ impl ParseTokens for Parser {
             args,
             body,
         }));
-        Ok(ast)
+        return Ok(ast);
+    }
+    fn parse_array(&mut self) -> Result<TypeVar, ErrorBuilder> {
+        let mut current_var = String::new();
+        let mut values = Vec::new();
+
+        let mut line = 0;
+        while let Some(token) = self.next() {
+            line = token.line;
+            match token.token_type.clone() {
+                TokenType::Comma => {
+                    let num: Result<i32, _> = current_var.parse();
+                    if num.is_ok() {
+                        values.push(TypeVar::Number(num.unwrap()));
+                        current_var = "".into();
+                        continue;
+                    }
+                    values.push(TypeVar::Number(num.unwrap()));
+                    current_var = "".into();
+                }
+                TokenType::Identifier => {
+                    current_var = token.value;
+                }
+                TokenType::CloseBracket => {
+                    return Ok(TypeVar::Arr { values });
+                }
+                TokenType::Number => {
+                    if current_var != "" {
+                        return Err(invalid_var_syntax_token(token));
+                    }
+                    current_var = token.value;
+                }
+                TokenType::Comment => {
+                    continue;
+                }
+                TokenType::String => {
+                    if current_var != "" {
+                        return Err(invalid_var_syntax_token(token));
+                    }
+                    current_var = token.value;
+                }
+                _ => return Err(invalid_var_syntax_token(token)),
+            }
+        }
+        println!("{:#?}", values);
+        return Err(invalid_arr_no_end(line));
     }
 }
