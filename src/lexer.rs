@@ -196,7 +196,7 @@ pub mod lexer {
                         }
                         return Token::new(TokenType::Identifier, identifier, l);
                     }
-                    '(' | ')' | '{' | '}' | '[' | ']' | '.' | ',' | '=' | '\n' => {
+                    '(' | ')' | '{' | '}' | '[' | ']' | '.' | ',' | '=' | '\n' | ';' => {
                         self.advance_back(1);
                         if let Some(token) = Self::keyword_token(&identifier, l) {
                             return token;

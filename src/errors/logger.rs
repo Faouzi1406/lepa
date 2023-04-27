@@ -157,6 +157,7 @@ macro_rules! logme {
 
     ($type:expr,$($message:expr),*) => {
         {
+            use lepa::errors::logger::log_any;
             $(
                 log_any($type,&$message);
             )*

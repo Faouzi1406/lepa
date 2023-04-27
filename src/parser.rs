@@ -1,6 +1,9 @@
 use crate::{
     ast::{Ast, Type, TypeVar, VarBuilder, Variable},
-    errors::error::{BuildError, ErrorBuilder},
+    errors::{
+        error::{BuildError, ErrorBuilder},
+        error_messages::non_ending_variable,
+    },
     lexer::lexer::{KeyWords, Operators, Token, TokenType},
 };
 
@@ -158,6 +161,7 @@ impl WalkParser for Parser {
     }
     fn advance_back(&mut self, n: usize) {
         self.current_position -= n;
+        self.prev_token = Some(self.tokens[self.current_position].clone());
     }
     fn up_until_token(&mut self, t: TokenType) -> Option<Vec<Token>> {
         let mut tokens = Vec::new();
@@ -186,6 +190,7 @@ pub trait Parse {
 
 trait ParseTokens {
     fn parse_var(&mut self) -> Result<Variable, ErrorBuilder>;
+    fn parse_block(&mut self) -> Result<Ast, ErrorBuilder>;
 }
 
 impl Parse for Parser {
@@ -197,6 +202,9 @@ impl Parse for Parser {
                 TokenType::Keyword(KeyWords::Let) => {
                     let var = self.parse_var()?;
                     ast.body.push(Ast::new(Type::Variable(var)));
+                }
+                TokenType::OpenBrace => {
+                    ast.body.push(self.parse_block()?);
                 }
                 _ => todo!("Haven't added parsing for these tokens yet"),
             }
@@ -242,31 +250,46 @@ impl ParseTokens for Parser {
                         TokenType::SemiColon => {
                             return Ok(var);
                         }
-                        // If we find any value that shouldn't be there we return and error
+                        // If we find any token that shouldn't be there we return and error
                         _ => {
                             return Err(ErrorBuilder::new()
                                 .message(format!(
                                     "Invalid syntax found {} while parsing variable",
                                     token.value
                                 ))
+                                .line(token.line)
+                                .file_name("todo:")
                                 .build_error())
                         }
                     }
                 }
                 return Ok(var);
             }
-            None => Err(ErrorBuilder::new()
-                .message(format!(
-                    "Found a variable without and ending semicolon {}",
-                    prev.value
-                ))
-                .line(prev.line)
-                .file_name("todo:.rs")
-                .helper(format!(
-                    "Consider adding a semicolon: let {} = var ;",
-                    prev.value
-                ))
-                .build_error()),
+            None => Err(non_ending_variable(prev.value, prev.line)),
         }
+    }
+
+    fn parse_block(&mut self) -> Result<Ast, ErrorBuilder> {
+        let mut ast = Ast::new(Type::Block);
+        while let Some(token) = self.next() {
+            match token.token_type {
+                TokenType::Keyword(KeyWords::Let) => {
+                    let ast_var = Ast::new(Type::Variable(self.parse_var()?));
+                    ast.body.push(ast_var);
+                }
+                TokenType::OpenBrace =>  {
+                    // Recursion
+                    //
+                    // Imagine me writing a entire loop right here that does the exact same
+                    // as what this function is doing.... pleass don't ever do that. :)
+                    ast.body.push(self.parse_block()?);
+                }
+                TokenType::CloseBrace =>  {
+                    return Ok(ast);
+                }
+                _ => todo!("Add parsing for these tokens")
+            }
+        }
+        Ok(ast)
     }
 }
