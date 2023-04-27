@@ -2,7 +2,6 @@
 pub mod test_parser {
     use crate::{
         ast::{AstVar, TypeVar, Type},
-        errors::logger::{Log, LogLevels, Logger},
         lexer::lexer::{KeyWords, Lexer, Operators, Token, TokenType},
         parser::{Parse, Parser, WalkParser},
     };

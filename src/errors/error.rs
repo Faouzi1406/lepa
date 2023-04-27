@@ -21,7 +21,7 @@ pub struct ErrorBuilder {
 
 impl Display for ErrorBuilder {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let file = format!(" File ---------------> {:#?}\n",self.file_name, );
+        let file = format!(" File -> {:#?}\n",self.file_name, );
         let message = format!(" Message -> {}\n",self.message_);
         let helps = match &self.helper_ {
             Some(msg) =>  format!(" Help -> {msg}\n"),

@@ -3,7 +3,7 @@ use crate::{
     errors::{
         error::{BuildError, ErrorBuilder},
         error_messages::{
-            invalid_function_body_syntax, invalid_function_syntax, non_ending_variable,
+            invalid_function_body_syntax, invalid_function_syntax_missing_id, non_ending_variable,
         },
     },
     lexer::lexer::{KeyWords, Operators, Token, TokenType},
@@ -193,7 +193,7 @@ pub trait Parse {
 trait ParseTokens {
     /// Parsing variables,
     ///
-    /// Currently it parses: 
+    /// Currently it parses:
     ///
     /// It doesn't need the let token and expects it to not be there, this is because the main
     /// parse function consumes it.
@@ -205,10 +205,9 @@ trait ParseTokens {
     ///
     /// It doesn't support:
     ///
-    /// - some = some; 
+    /// - some = some;
     fn parse_var(&mut self) -> Result<Variable, ErrorBuilder>;
-    fn parse_block(&mut self) -> Result<Ast, ErrorBuilder>;
-    /// Parsing blocks 
+    /// Parsing blocks
     ///
     /// Blocks can be considered as anything that starts with a '{' and end withs a '}'.
     /// Nested blocks are also supported.
@@ -221,12 +220,27 @@ trait ParseTokens {
     ///   let number = 1;
     ///  }
     /// }
+    fn parse_block(&mut self) -> Result<Ast, ErrorBuilder>;
+    /// Parsing functions
+    ///
+    /// It will parse any valid function:
+    ///
+    /// # Example
+    ///
+    ///
+    /// fn some(arg, arg) {
+    ///  let hello_world = "wow";
+    /// }
+    ///
+    /// fn other() {
+    /// let wowo
+    /// }
     fn parse_fn(&mut self) -> Result<Ast, ErrorBuilder>;
-    /// Parsing arguments 
+    /// Parsing arguments
     ///
     /// This could be anything inbetween a OpenBrace and CloseBrace:
     ///
-    /// # Examples 
+    /// # Examples
     ///
     /// fn some ( arg1, arg2, arg3 )
     ///
@@ -319,13 +333,17 @@ impl ParseTokens for Parser {
     }
     fn parse_block(&mut self) -> Result<Ast, ErrorBuilder> {
         let mut ast = Ast::new(Type::Block);
+        let mut line = 0;
         while let Some(token) = self.next() {
+            line += token.line;
             match token.token_type {
                 TokenType::Keyword(KeyWords::Let) => {
                     let ast_var = Ast::new(Type::Variable(self.parse_var()?));
                     ast.body.push(ast_var);
                 }
-                TokenType::Keyword(KeyWords::Fn) => {}
+                TokenType::Keyword(KeyWords::Fn) => {
+                    ast.body.push(self.parse_fn()?);
+                }
                 TokenType::OpenBracket => {
                     // Recursion
                     //
@@ -339,12 +357,12 @@ impl ParseTokens for Parser {
                 token => todo!("Add parsing for these tokens {:#?}", token),
             }
         }
-        Ok(ast)
+        return Err(invalid_function_body_syntax("".to_string(), line))
     }
     fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
         let Some(tokens_until_close) = self.up_until_token(TokenType::CloseBrace) else {
-            return Err(invalid_function_syntax(prev.line))
+            return Err(invalid_function_syntax_missing_id(prev.line))
         };
 
         let mut args = Vec::new();
@@ -368,26 +386,25 @@ impl ParseTokens for Parser {
                 TokenType::OpenBrace => {
                     continue;
                 }
-                _ => return Err(invalid_function_syntax(prev.line)),
+                // todo: Invalid argument token error
+                _ => return Err(invalid_function_syntax_missing_id(prev.line)),
             }
         }
         return Ok(args);
     }
-
     fn parse_fn(&mut self) -> Result<Ast, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
 
         let Some(next) = self.next() else {
-            println!("Something went wrong");
-            return Err(invalid_function_syntax(prev.line));
+            return Err(invalid_function_syntax_missing_id(prev.line));
         };
         if next.token_type != TokenType::Identifier {
-            return Err(invalid_function_syntax(prev.line));
+            return Err(invalid_function_syntax_missing_id(prev.line));
         }
 
         let args = self.parse_args()?;
         let Some(body) = self.next() else {
-            return Err(invalid_function_syntax(prev.line));
+            return Err(invalid_function_syntax_missing_id(prev.line));
         };
 
         if body.token_type != TokenType::OpenBracket {

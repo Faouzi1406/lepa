@@ -35,14 +35,15 @@ pub fn non_ending_variable(var: String, line: usize) -> ErrorBuilder {
 /// - fn
 ///     -> fn doesn't mean anything it doesn't have a function body or identifier therefore can't
 ///     be parsed.
-pub fn invalid_function_syntax(line: usize) -> ErrorBuilder {
+pub fn invalid_function_syntax_missing_id(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
         .message(format!("Found invalid function syntax."))
         .line(line)
         .file_name("todo:.rs")
         .helper(format!(
-            "Consider adding a identifier to the function fn {} or adding a function body  ",
-            "-> hello_world <-".blue().bold()
+            "Consider adding a identifier to the function: {} {}",
+            "fn".blue().bold(),
+            "hello_world() ".yellow().bold()
         ))
         .build_error()
 }
@@ -64,9 +65,9 @@ pub fn invalid_function_body_syntax(name: String, line: usize) -> ErrorBuilder {
         .file_name("todo:.rs")
         .helper(format!(
             "Consider adding a body to the function -> fn {name} {}{}{}",
-            "{".yellow().bold(),
-            " <<body>> ".blue().bold(),
-            "}".yellow().bold()
+            "{".blue().bold(),
+            " <<body>> ".yellow().bold(),
+            "}".blue().bold()
         ))
         .build_error()
 }
