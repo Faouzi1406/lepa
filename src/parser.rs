@@ -2,7 +2,9 @@ use crate::{
     ast::{self, Ast, Type, TypeVar, VarBuilder, Variable},
     errors::{
         error::{BuildError, ErrorBuilder},
-        error_messages::{invalid_function_syntax, non_ending_variable, invalid_function_body_syntax},
+        error_messages::{
+            invalid_function_body_syntax, invalid_function_syntax, non_ending_variable,
+        },
     },
     lexer::lexer::{KeyWords, Operators, Token, TokenType},
 };
@@ -319,13 +321,15 @@ impl ParseTokens for Parser {
                     current_var.name(token.value)?;
                 }
                 TokenType::CloseBrace => {
-                    args.push(current_var.clone());
+                    if current_var.name != "" {
+                        args.push(current_var.clone());
+                    }
                     return Ok(args);
                 }
                 TokenType::OpenBrace => {
                     continue;
                 }
-                _ => return Err(invalid_function_syntax(prev.line))
+                _ => return Err(invalid_function_syntax(prev.line)),
             }
         }
         return Ok(args);
