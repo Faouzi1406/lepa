@@ -100,7 +100,7 @@ pub trait WalkParser {
     ///  prev_token:None
     ///  };
     ///  let token:Option<Vec<Token>> = parser.peak_nth_all(2);
-    ///  assert_eq!(token, Some(vec![Token { token_type: TokenType::Keyword(KeyWords::Let), value: "let".into(), line: 0 }, Token { token_type: TokenType::Identifier, value: "main".into(), line: 0 }]));
+    ///  assert_eq!(token, Some(vec![Token { token_type: TokenType::Keyword(KeyWords::Let), value: "let".into(), line: 1 }, Token { token_type: TokenType::Identifier, value: "main".into(), line: 1 }]));
     ///  
     /// ```
     ///

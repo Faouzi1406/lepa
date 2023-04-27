@@ -19,7 +19,7 @@ pub mod test_parser {
             Some(Token {
                 token_type: TokenType::Keyword(KeyWords::Else),
                 value: "else".into(),
-                line: 0
+                line: 1
             })
         )
     }
@@ -37,12 +37,12 @@ pub mod test_parser {
                 Token {
                     token_type: TokenType::Keyword(KeyWords::If),
                     value: "if".into(),
-                    line: 0
+                    line: 1
                 },
                 Token {
                     token_type: TokenType::Operator(Operators::EqEq),
                     value: "==".into(),
-                    line: 0
+                    line: 1
                 },
             ])
         )
@@ -65,12 +65,12 @@ pub mod test_parser {
                 Token {
                     token_type: TokenType::Keyword(KeyWords::If),
                     value: "if".into(),
-                    line: 0
+                    line: 1
                 },
                 Token {
                     token_type: TokenType::Operator(Operators::EqEq),
                     value: "==".into(),
-                    line: 0
+                    line: 1
                 }
             ]
         );
