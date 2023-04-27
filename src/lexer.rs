@@ -13,15 +13,18 @@ pub mod lexer {
         Comma,
         Space,
         SemiColon,
+        Colon,
         Invalid,
         Min,
-        Plush,
+        Plus,
         OpenBrace,
         CloseBrace,
         OpenBracket,
         CloseBracket,
         OpenCurlyBracket,
         CloseCurlyBracket,
+        Comment,
+        Slash,
     }
 
     #[derive(Debug, PartialEq, Clone, Copy)]
@@ -32,7 +35,7 @@ pub mod lexer {
         Fn,
         Bool,
         While,
-        For
+        For,
     }
 
     /// All the operators
@@ -51,15 +54,15 @@ pub mod lexer {
     pub struct Token {
         pub token_type: TokenType,
         pub value: String,
-        pub line:usize
+        pub line: usize,
     }
 
     impl Token {
-        pub fn new(token_type: TokenType, value: impl AsRef<str>, line:usize) -> Token {
+        pub fn new(token_type: TokenType, value: impl AsRef<str>, line: usize) -> Token {
             return Token {
                 token_type,
                 value: value.as_ref().to_owned(),
-                line
+                line,
             };
         }
     }
@@ -69,18 +72,19 @@ pub mod lexer {
     }
 
     pub trait Tokenizer {
-        fn eq_token(&mut self, l:usize) -> Token;
-        fn less_token(&mut self, l:usize) -> Token;
-        fn more_token(&mut self, l:usize) -> Token;
-        fn string_token(&mut self, l:usize) -> Token;
-        fn number_token(&mut self, l:usize) -> Token;
-        fn identifier_token(&mut self, l:usize) -> Token;
-        fn keyword_token(t: impl AsRef<str>, l:usize) -> Option<Token>;
+        fn eq_token(&mut self, l: usize) -> Token;
+        fn less_token(&mut self, l: usize) -> Token;
+        fn more_token(&mut self, l: usize) -> Token;
+        fn string_token(&mut self, l: usize) -> Token;
+        fn comment_token(&mut self, l: usize) -> Token;
+        fn number_token(&mut self, l: usize) -> Token;
+        fn identifier_token(&mut self, l: usize) -> Token;
+        fn keyword_token(t: impl AsRef<str>, l: usize) -> Option<Token>;
     }
 
     impl Tokenizer for Cursor {
         /// My language will not support === cause that is for js
-        fn eq_token(&mut self, l:usize) -> Token {
+        fn eq_token(&mut self, l: usize) -> Token {
             // If there is no char next it must only be a single =
             // Therefore it is a single equal
             let Some(peak) = self.peak_nth(1) else {
@@ -100,7 +104,7 @@ pub mod lexer {
                 }
             }
         }
-        fn less_token(&mut self, l:usize) -> Token {
+        fn less_token(&mut self, l: usize) -> Token {
             // If there is no char next it must only be a single <
             let Some(peak) = self.peak_nth(1) else {
                 return Token::new(TokenType::Operator(Operators::Less), "<", l);
@@ -116,11 +120,11 @@ pub mod lexer {
                 _ => Token::new(
                     TokenType::Operator(Operators::Invalid(Box::from(peak))),
                     "Invalid less operator",
-                    l
+                    l,
                 ),
             }
         }
-        fn more_token(&mut self, l:usize) -> Token {
+        fn more_token(&mut self, l: usize) -> Token {
             // If there is no char next it must only be a single >
             let Some(peak) = self.peak_nth(1) else {
                 return Token::new(TokenType::Operator(Operators::More),  ">",l);
@@ -136,13 +140,12 @@ pub mod lexer {
                 _ => Token::new(
                     TokenType::Operator(Operators::Invalid(Box::from(peak))),
                     "Invalid more operator",
-                    l
+                    l,
                 ),
             }
         }
         /// Returns the token type and the value
-        fn string_token(&mut self, l:usize) -> Token {
-            // If there is no char next it must only be a single >
+        fn string_token(&mut self, l: usize) -> Token {
             let mut string = String::new();
             // Advance until we find a "
             while let Some(char) = self.next() {
@@ -153,10 +156,38 @@ pub mod lexer {
             }
             // If we get here it means we did not find a closing quote
             // This would be considered an error
-            return Token::new(TokenType::Invalid, "Found a string without a closing quote", l);
+            return Token::new(
+                TokenType::Invalid,
+                "Found a string without a closing quote",
+                l,
+            );
+        }
+        /// Returns the comment token type and the comment
+        /// Could also just return a slash if the /  isn't followed by two slashes
+        fn comment_token(&mut self, l: usize) -> Token {
+            let mut comment = String::new();
+            let Some(peak_next) = self.peak_nth(1) else {
+                return Token::new(TokenType::Slash, "/", l);
+            };
+
+            match peak_next[0..1] {
+                ['/'] => {
+                    self.next();
+                    while let Some(char) = self.next() {
+                        match char {
+                            '\n'  => return Token::new(TokenType::Comment, comment, l),
+                            _ => comment.push(char),
+                        };
+                    }
+                    return Token::new(TokenType::Comment, comment, l);
+                }
+                _ => {
+                    return Token::new(TokenType::Slash, "/", l);
+                }
+            }
         }
         /// Returns the token type and the value
-        fn number_token(&mut self, l:usize) -> Token {
+        fn number_token(&mut self, l: usize) -> Token {
             let mut number = String::new();
             // We advance the cursor until we found a space which means there are no more numbers
             // related to this number
@@ -180,7 +211,7 @@ pub mod lexer {
 
         // Matches the identifier to a keyword
         // If it is not a keyword it returns the identifier otherwise it returns the keyword
-        fn identifier_token(&mut self, l:usize) -> Token {
+        fn identifier_token(&mut self, l: usize) -> Token {
             // The identifier is the value that gets assigned to a variable
             let mut identifier = String::new();
 
@@ -213,7 +244,7 @@ pub mod lexer {
         }
 
         /// Returns a token if the token is in the existing field of tokens
-        fn keyword_token(t: impl AsRef<str>, l:usize) -> Option<Token> {
+        fn keyword_token(t: impl AsRef<str>, l: usize) -> Option<Token> {
             match t.as_ref() {
                 "let" => Some(Token::new(TokenType::Keyword(KeyWords::Let), "let", l)),
                 "fn" => Some(Token::new(TokenType::Keyword(KeyWords::Fn), "fn", l)),
@@ -237,16 +268,20 @@ pub mod lexer {
             while let Some(token) = cursor.next() {
                 match token {
                     '\n' => {
-                        line +=1;
+                        line += 1;
                         continue;
                     }
-                    ' ' |  '\t' => continue,
+                    ' ' | '\t' => continue,
                     ',' => vec.push(Token::new(TokenType::Comma, ",", line)),
+                    '+' => vec.push(Token::new(TokenType::Plus, ",", line)),
+                    '-' => vec.push(Token::new(TokenType::Min, ",", line)),
                     '.' => vec.push(Token::new(TokenType::Dot, ".", line)),
                     '}' => vec.push(Token::new(TokenType::CloseBrace, "}", line)),
                     '{' => vec.push(Token::new(TokenType::OpenBrace, "{", line)),
                     '(' => vec.push(Token::new(TokenType::OpenBrace, "(", line)),
                     ')' => vec.push(Token::new(TokenType::CloseBrace, ")", line)),
+                    ':' => vec.push(Token::new(TokenType::Colon, ":", line)),
+                    '/'  => vec.push(cursor.comment_token(line)), 
                     '=' => vec.push(cursor.eq_token(line)),
                     '>' => vec.push(cursor.more_token(line)),
                     '<' => vec.push(cursor.less_token(line)),
