@@ -272,6 +272,22 @@ trait ParseTokens {
     /// hello_world() // this would be a function call
     /// ```
     fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder>;
+    // Parsing statements 
+    //
+    // # Example 
+    //
+    // ```
+    // if 1 == 2 {
+    //  println!("?");
+    // }
+    // else if 1 == 1 {
+    //  println!("looks good to me");
+    // }
+    // else {
+    //  println!("?");
+    // }
+    // ```
+    // fn parse_statement(&mut self) -> Result<Ast, ErrorBuilder>;
 }
 
 impl Parse for Parser {
@@ -531,4 +547,7 @@ impl ParseTokens for Parser {
 
         return Ok(func);
     }
+    // fn parse_statement(&mut self) -> Result<Ast, ErrorBuilder> {
+    //     
+    // }
 }
