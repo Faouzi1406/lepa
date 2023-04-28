@@ -1,70 +1,96 @@
-use inkwell::{context::Context, module::Module, execution_engine::ExecutionEngine, builder::Builder, AddressSpace};
+use inkwell::{
+    builder::Builder, context::Context, execution_engine::ExecutionEngine, module::Module,
+    AddressSpace,
+};
 
-use crate::ast::{Ast, Func, Variable};
+static LOGGER:Logger = Logger(crate::errors::logger::LogLevels::Info);
 
-pub struct Compiler {
-    pub ast: Ast,
-}
+use crate::{ast::{self, Ast, Func, Variable}, logme, errors::logger::{Logger, Log}};
 
 pub struct CodeGen<'ctx> {
     context: &'ctx Context,
     module: Module<'ctx>,
     builder: Builder<'ctx>,
-    execution_engine: ExecutionEngine<'ctx>,
-}
-
-impl Compiler {
-    pub fn new(ast: Ast) -> Compiler {
-        Compiler { ast }
-    }
 }
 
 pub trait Compile {
-    fn compile(&self);
+    ///  Takes the ast and returns the llvm ir string
+    fn compile(&self) -> String;
 }
 
-impl Compile for Compiler {
-    fn compile(&self)  {
+impl Compile for Ast {
+    fn compile(&self) -> String {
         let context = Context::create();
-        let builder = context.create_builder();
-        let module = context.create_module("main");
-        let execution_engine = module.create_jit_execution_engine(inkwell::OptimizationLevel::None).unwrap();
-        let code_gen =  CodeGen {
+        let module = context.create_module("start");
+
+        let code_gen = CodeGen {
             module,
-            context:&context,
-            builder,
-            execution_engine
+            context: &context,
+            builder: context.create_builder(),
         };
 
-        match &self.ast.type_ {
-            // crate::ast::Type::Function(func) => {
-            // }
-            crate::ast::Type::Variable(var) => {
-                code_gen.gen_var(var);
+        match &self.type_ {
+            crate::ast::Type::Program => {
+                code_gen.compile_gen(self.clone());
             }
-            _ => (),
+            _ => {
+                LOGGER.error(&"[COMPILER] Ast didn't start with program as first node.")
+            },
         };
 
-        let string = code_gen.module.to_string();
-        println!("{:#?}", string);
+        code_gen.module.to_string()
     }
 }
 
 trait Gen {
+    fn compile_gen(&self, ast: Ast);
     fn gen_var(&self, var: &Variable);
+    fn gen_func(&self, function: &Func);
 }
 
 impl<'ctx> Gen for CodeGen<'ctx> {
+    fn compile_gen(&self, ast: Ast) {
+        for node in ast.body {
+            match node.type_ {
+                crate::ast::Type::Variable(var) => {
+                    let _ = &self.gen_var(&var);
+                }
+                crate::ast::Type::Function(func) => {
+                    let _ = &self.gen_func(&func);
+                }
+                _ => (),
+            };
+        }
+    }
     fn gen_var(&self, var: &Variable) {
         let Variable { name, type_, .. } = var;
-        match type_  {
+        match type_ {
             crate::ast::TypeVar::Number(number) => {
                 let num = self.context.i32_type();
                 let number = num.const_int(*number as u64, false);
-                let var = &self.module.add_global(num, Some(AddressSpace::from(1_u16)), name);
+                let var = &self
+                    .module
+                    .add_global(num, Some(AddressSpace::from(1_u16)), name);
                 var.set_initializer(&number);
             }
-            _ => ()
+            _ => (),
         }
+    }
+    fn gen_func(&self, function: &Func) {
+        // Todo add args to functions  and return type of function...: let vars = &function.args;
+        let fn_type = match function.return_type {
+            ast::ReturnTypes::None => {
+                self.context.void_type().fn_type(&[], false)
+            }
+            ast::ReturnTypes::Number => {
+                self.context.i32_type().fn_type(&[], false)
+            }
+            _ => todo!("Not supported yet...")
+        };
+
+        let func = &self.module.add_function(&function.name, fn_type, None);
+        let basic_block = &self.context.append_basic_block(*func, "entry");
+        self.builder.position_at_end(*basic_block);
+        self.builder.build_return(None);
     }
 }

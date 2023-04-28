@@ -80,14 +80,22 @@ impl VarBuilder for Variable {
     }
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq,Clone)]
+pub enum ReturnTypes {
+    Number,
+    String,
+    None
+}
+
+#[derive(Debug, PartialEq, Clone)]
 pub struct Func {
     pub name: String,
     pub args: Vec<Variable>,
     pub body: Option<Box<Ast>>,
+    pub return_type:ReturnTypes
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     Program,
     Variable(Variable),
@@ -100,7 +108,7 @@ pub enum Type {
     Block,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Ast {
     pub type_: Type,
     pub body: Vec<Ast>,

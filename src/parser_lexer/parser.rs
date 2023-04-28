@@ -1,5 +1,5 @@
 use crate::{
-    ast::{self, Ast, Func, Type, TypeVar, VarBuilder, Variable},
+    ast::{self, Ast, Func, ReturnTypes, Type, TypeVar, VarBuilder, Variable},
     errors::{
         error::ErrorBuilder,
         error_messages::{
@@ -272,9 +272,9 @@ trait ParseTokens {
     /// hello_world() // this would be a function call
     /// ```
     fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder>;
-    // Parsing statements 
+    // Parsing statements
     //
-    // # Example 
+    // # Example
     //
     // ```
     // if 1 == 2 {
@@ -462,8 +462,29 @@ impl ParseTokens for Parser {
             return Err(invalid_function_syntax_missing_id(prev.line));
         };
 
-        if body.token_type != TokenType::OpenCurlyBracket {
-            return Err(invalid_function_body_syntax(next.value, prev.line));
+        let mut return_type = ReturnTypes::None;
+
+        match body.token_type {
+            TokenType::OpenCurlyBracket => {}
+            TokenType::Keyword(KeyWords::Number) => {
+                return_type = ReturnTypes::Number;
+                let Some(next) = self.next() else {
+                    return Err(invalid_function_body_syntax(next.value, prev.line));
+                };
+                if next.token_type != TokenType::OpenCurlyBracket {
+                    return Err(invalid_function_body_syntax(next.value, prev.line));
+                }
+            }
+            TokenType::Keyword(KeyWords::String) => {
+                return_type = ReturnTypes::String;
+                let Some(next) = self.next() else {
+                    return Err(invalid_function_body_syntax(next.value, prev.line));
+                };
+                if next.token_type != TokenType::OpenCurlyBracket {
+                    return Err(invalid_function_body_syntax(next.value, prev.line));
+                }
+            }
+            _ => return Err(invalid_function_body_syntax(next.value, prev.line)),
         }
 
         let body = Some(Box::from(self.parse_block()?));
@@ -472,6 +493,7 @@ impl ParseTokens for Parser {
             name: next.value,
             args,
             body,
+            return_type,
         }));
         return Ok(ast);
     }
@@ -536,6 +558,7 @@ impl ParseTokens for Parser {
             name: prev.value.clone(),
             args: self.parse_args()?,
             body: None,
+            return_type:ReturnTypes::None
         }));
         let Some(close) =self.next() else {
             return Err(non_ending_variable(prev.value, prev.line));
@@ -548,6 +571,6 @@ impl ParseTokens for Parser {
         return Ok(func);
     }
     // fn parse_statement(&mut self) -> Result<Ast, ErrorBuilder> {
-    //     
+    //
     // }
 }

@@ -1,0 +1,9 @@
+; ModuleID = 'start'
+source_filename = "start"
+
+@var = addrspace(1) global i32 1
+
+define i32 @main() {
+entry:
+  ret void
+}
