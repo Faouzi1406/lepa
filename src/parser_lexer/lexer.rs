@@ -36,7 +36,9 @@ pub mod lexer {
         Bool,
         While,
         For,
-        Return
+        Return,
+        Number,
+        String
     }
 
     /// All the operators
@@ -253,6 +255,8 @@ pub mod lexer {
                 "else" => Some(Token::new(TokenType::Keyword(KeyWords::Else), "else", l)),
                 "while" => Some(Token::new(TokenType::Keyword(KeyWords::While), "while", l)),
                 "for" => Some(Token::new(TokenType::Keyword(KeyWords::For), "for", l)),
+                "number" =>  Some(Token::new(TokenType::Keyword(KeyWords::Number), "number", l)),
+                "string" =>  Some(Token::new(TokenType::Keyword(KeyWords::String), "string", l)),
                 "return" =>  Some(Token::new(TokenType::Keyword(KeyWords::Return), "return", l)),
                 value if value == "true" || value == "false" => {
                     Some(Token::new(TokenType::Keyword(KeyWords::Bool), value, l))

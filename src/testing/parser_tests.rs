@@ -90,7 +90,7 @@ pub mod test_parser {
         );
 
         let var_2 = &parse.as_ref().unwrap().body[1];
-        assert_eq!(var_2.var_name(), Some("number".into()));
+        assert_eq!(var_2.var_name(), Some("wow".into()));
         assert_eq!(var_2.var_value(), Some(TypeVar::Number(20)));
     }
 
