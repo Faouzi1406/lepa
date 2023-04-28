@@ -4,7 +4,7 @@ use crate::errors::error::{BuildError, ErrorBuilder};
 pub enum TypeVar {
     Number(i32),
     String(String),
-    Arr { values: Vec<TypeVar>},
+    Arr { values: Vec<TypeVar> },
     None,
 }
 
@@ -92,6 +92,11 @@ pub enum Type {
     Program,
     Variable(Variable),
     Function(Func),
+    /// A call to a function 
+    //
+    /// It contains the func that is being called under Func.name and the arguments passed into the
+    /// function
+    FunctionCall(Func),
     Block,
 }
 

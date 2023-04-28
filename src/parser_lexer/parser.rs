@@ -1,10 +1,10 @@
 use crate::{
-    ast::{self, Ast, Type, TypeVar, VarBuilder, Variable},
+    ast::{self, Ast, Func, Type, TypeVar, VarBuilder, Variable},
     errors::{
         error::ErrorBuilder,
         error_messages::{
-            invalid_arr_no_end, invalid_function_body_syntax, invalid_function_syntax_missing_id,
-            invalid_var_syntax_token, non_ending_variable,
+            invalid_arr_no_end, invalid_function_body_syntax, invalid_function_call,
+            invalid_function_syntax_missing_id, invalid_var_syntax_token, non_ending_variable,
         },
     },
     parser_lexer::lexer::lexer::{KeyWords, Operators, Token, TokenType},
@@ -250,7 +250,28 @@ trait ParseTokens {
     ///
     /// ( arg1, arg2, arg3 )
     fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder>;
+    /// Parsing arrays
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// [1,2,3,4,5];
+    ///
+    /// ["wow", "hello world", "googbye world"];
+    /// ```
     fn parse_array(&mut self) -> Result<TypeVar, ErrorBuilder>;
+    /// Parsing function calls:
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// fn hello_world() {
+    /// println!("hello world!");
+    /// }
+    ///
+    /// hello_world() // this would be a function call
+    /// ```
+    fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder>;
 }
 
 impl Parse for Parser {
@@ -268,6 +289,9 @@ impl Parse for Parser {
                 }
                 TokenType::OpenCurlyBracket => {
                     ast.body.push(self.parse_block()?);
+                }
+                TokenType::Identifier => {
+                    ast.body.push(self.parse_fn_call()?);
                 }
                 TokenType::Comment => {
                     continue;
@@ -342,6 +366,9 @@ impl ParseTokens for Parser {
                 TokenType::Keyword(KeyWords::Fn) => {
                     ast.body.push(self.parse_fn()?);
                 }
+                TokenType::Identifier => {
+                    ast.body.push(self.parse_fn_call()?);
+                }
                 TokenType::OpenCurlyBracket => {
                     // Recursion
                     //
@@ -351,6 +378,9 @@ impl ParseTokens for Parser {
                 }
                 TokenType::CloseCurlyBracket => {
                     return Ok(ast);
+                }
+                TokenType::Comment => {
+                    continue;
                 }
                 token => todo!("Add parsing for these tokens {:#?}", token),
             }
@@ -375,6 +405,12 @@ impl ParseTokens for Parser {
                 TokenType::Identifier => {
                     current_var.name(token.value)?;
                 }
+                TokenType::String => {
+                    current_var.name(token.value)?;
+                }
+                TokenType::Number => {
+                    current_var.name(token.value)?;
+                }
                 TokenType::CloseBrace => {
                     if current_var.name != "" {
                         args.push(current_var.clone());
@@ -387,8 +423,10 @@ impl ParseTokens for Parser {
                 TokenType::Comment => {
                     continue;
                 }
-                // todo: Invalid argument token error
-                _ => return Err(invalid_function_syntax_missing_id(prev.line)),
+                // Todo: Invalid argument token error
+                _ => {
+                    return Err(invalid_function_syntax_missing_id(prev.line));
+                }
             }
         }
         return Ok(args);
@@ -464,5 +502,33 @@ impl ParseTokens for Parser {
             }
         }
         return Err(invalid_arr_no_end(line));
+    }
+    fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder> {
+        let prev = self.prev_token.clone().unwrap();
+        let next = self.peak_nth(0);
+
+        match next {
+            Some(token) => {
+                if token.token_type != TokenType::OpenBrace {
+                    return Err(invalid_function_call(prev.value, prev.line));
+                }
+            }
+            None => return Err(invalid_function_call(prev.value, prev.line)),
+        }
+
+        let func = Ast::new(Type::Function(Func {
+            name: prev.value.clone(),
+            args: self.parse_args()?,
+            body: None,
+        }));
+        let Some(close) =self.next() else {
+            return Err(non_ending_variable(prev.value, prev.line));
+        };
+
+        if close.token_type != TokenType::SemiColon {
+            return Err(non_ending_variable(prev.value, prev.line));
+        }
+
+        return Ok(func);
     }
 }

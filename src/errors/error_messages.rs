@@ -64,7 +64,7 @@ pub fn invalid_function_body_syntax(name: String, line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
         .message(format!("Found invalid function syntax."))
         .line(line)
-        .file_name("todo:.rs")
+        .file_name("todo:")
         .helper(format!(
             "Consider adding a body to the function -> fn {name} {}{}{}",
             "{".blue().bold(),
@@ -81,6 +81,17 @@ pub fn invalid_var_syntax_token(token: Token) -> ErrorBuilder {
             token.value
         ))
         .line(token.line)
+        .file_name("todo:")
+        .build_error()
+}
+
+pub fn invalid_function_call(name: String, line: usize) -> ErrorBuilder {
+    ErrorBuilder::new()
+        .message(format!(
+            "Invalid function call ${name}",
+        ))
+        .line(line)
+        .helper(format!("Found a function call to {}  with no leading OpenBrace en CloseBrace consider changing it to {}(...).", name.yellow().bold(), name.blue().bold()))
         .file_name("todo:")
         .build_error()
 }
