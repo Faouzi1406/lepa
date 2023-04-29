@@ -3,9 +3,13 @@ use inkwell::{
     AddressSpace,
 };
 
-static LOGGER:Logger = Logger(crate::errors::logger::LogLevels::Info);
+static LOGGER: Logger = Logger(crate::errors::logger::LogLevels::Info);
 
-use crate::{ast::{self, Ast, Func, Variable}, logme, errors::logger::{Logger, Log}};
+use crate::{
+    ast::{self, Ast, Func, TypesArg, Variable},
+    errors::logger::{self, Log, Logger},
+    logme,
+};
 
 pub struct CodeGen<'ctx> {
     context: &'ctx Context,
@@ -33,9 +37,7 @@ impl Compile for Ast {
             crate::ast::Type::Program => {
                 code_gen.compile_gen(self.clone());
             }
-            _ => {
-                LOGGER.error(&"[COMPILER] Ast didn't start with program as first node.")
-            },
+            _ => LOGGER.error(&"[COMPILER] Ast didn't start with program as first node."),
         };
 
         code_gen.module.to_string()
@@ -77,15 +79,33 @@ impl<'ctx> Gen for CodeGen<'ctx> {
         }
     }
     fn gen_func(&self, function: &Func) {
-        // Todo add args to functions  and return type of function...: let vars = &function.args;
+        let vars = &function.args;
+        let mut args = vec![];
+
+        for arg in vars {
+            match arg.type_ {
+                TypesArg::None => {
+                    LOGGER.error(&format!(
+                        "Found a invalid function argument, {} doesn't have a type.",
+                        arg.value
+                    ));
+                }
+                TypesArg::Number => {
+                    args.push(self.context.i32_type().into());
+                }
+                TypesArg::String => {
+                    LOGGER.error(&format!(
+                        "Found a invalid function argument, {} is of type string, this is not supported yet :(.",
+                        arg.value
+                    ));
+                }
+            }
+        }
+
         let fn_type = match function.return_type {
-            ast::ReturnTypes::None => {
-                self.context.void_type().fn_type(&[], false)
-            }
-            ast::ReturnTypes::Number => {
-                self.context.i32_type().fn_type(&[], false)
-            }
-            _ => todo!("Not supported yet...")
+            ast::ReturnTypes::None => self.context.void_type().fn_type(&args, false),
+            ast::ReturnTypes::Number => self.context.i32_type().fn_type(&args, false),
+            _ => todo!("Not supported yet..."),
         };
 
         let func = &self.module.add_function(&function.name, fn_type, None);

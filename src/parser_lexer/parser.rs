@@ -1,5 +1,5 @@
 use crate::{
-    ast::{self, Ast, Func, ReturnTypes, Type, TypeVar, VarBuilder, Variable},
+    ast::{self, Arg, Ast, Func, ReturnTypes, Type, TypeVar, TypesArg, VarBuilder, Variable},
     errors::{
         error::ErrorBuilder,
         error_messages::{
@@ -247,7 +247,7 @@ trait ParseTokens {
     /// some( arg1, arg2, arg3 )
     ///
     /// ( arg1, arg2, arg3 )
-    fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder>;
+    fn parse_args(&mut self) -> Result<Vec<Arg>, ErrorBuilder>;
     /// Parsing arrays
     ///
     /// # Examples
@@ -401,34 +401,79 @@ impl ParseTokens for Parser {
         }
         return Err(invalid_function_body_syntax("".to_string(), line));
     }
-    fn parse_args(&mut self) -> Result<Vec<Variable>, ErrorBuilder> {
+    fn parse_args(&mut self) -> Result<Vec<Arg>, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
+
         let Some(tokens_until_close) = self.up_until_token(TokenType::CloseBrace) else {
             return Err(invalid_function_syntax_missing_id(prev.line))
         };
 
         let mut args = Vec::new();
-        let mut current_var = Variable::new();
+        let mut current_arg = Arg::new();
 
         for token in tokens_until_close {
             match token.token_type {
                 TokenType::Comma => {
-                    args.push(current_var.clone());
-                    current_var.name = "".into();
+                    args.push(current_arg.clone());
+                    current_arg.clear_type();
+                    current_arg.clear_value();
+                }
+                TokenType::Keyword(keyword) => {
+                    match keyword {
+                        KeyWords::Number => {
+                            let ass_type = current_arg.assign_type(TypesArg::Number);
+                            // Todo: Add better error for this case
+                            if ass_type.is_err() {
+                                return Err(invalid_var_syntax_token(token));
+                            }
+                        }
+
+                        KeyWords::String => {
+                            let ass_type = current_arg.assign_type(TypesArg::String);
+                            if ass_type.is_err() {
+                                return Err(invalid_var_syntax_token(token));
+                            }
+                        }
+                        _ => todo!("Add a good error message for this case"),
+                    }
                 }
                 TokenType::Identifier => {
-                    current_var.name(token.value)?;
+                    let val = current_arg.assign_value(token.value.clone());
+                    if current_arg.type_ == TypesArg::None {
+                        // Todo: Add better error for this case
+                        return Err(invalid_var_syntax_token(token));
+                    }
+                    if val.is_err() {
+                        // Todo: Add better error for this case
+                        return Err(invalid_var_syntax_token(token));
+                    }
                 }
                 TokenType::String => {
-                    current_var.name(token.value)?;
+                    let val = current_arg.assign_value(token.value.clone());
+                    if val.is_err() {
+                        // Todo: Add better error for this case
+                        return Err(invalid_var_syntax_token(token));
+                    }
+                    let ass_type = current_arg.assign_type(TypesArg::String);
+                    if ass_type.is_err() {
+                        return Err(invalid_var_syntax_token(token));
+                    }
                 }
                 TokenType::Number => {
-                    current_var.name(token.value)?;
+                    let val = current_arg.assign_value(token.value.clone());
+                    if val.is_err() {
+                        // Todo: Add better error for this case
+                        return Err(invalid_var_syntax_token(token));
+                    }
+                    let ass_type = current_arg.assign_type(TypesArg::Number);
+                    if ass_type.is_err() {
+                        return Err(invalid_var_syntax_token(token));
+                    }
                 }
                 TokenType::CloseBrace => {
-                    if current_var.name != "" {
-                        args.push(current_var.clone());
-                    }
+                    args.push(current_arg.clone());
+                    current_arg.clear_type();
+                    current_arg.clear_value();
                     return Ok(args);
                 }
                 TokenType::OpenBrace => {
@@ -556,7 +601,7 @@ impl ParseTokens for Parser {
             name: prev.value.clone(),
             args: self.parse_args()?,
             body: None,
-            return_type:ReturnTypes::None
+            return_type: ReturnTypes::None,
         }));
         let Some(close) =self.next() else {
             return Err(non_ending_variable(prev.value, prev.line));

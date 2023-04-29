@@ -25,6 +25,48 @@ pub struct Variable {
     pub line: usize,
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum TypesArg {
+    String,
+    Number,
+    None,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Arg {
+    pub value: String,
+    pub type_: TypesArg,
+}
+
+impl Arg {
+    pub fn new() -> Arg {
+        Arg {
+            value: String::new(),
+            type_: TypesArg::None,
+        }
+    }
+    pub fn assign_value(&mut self, value: String) -> Result<(), &'static str> {
+        if self.value != "" {
+            return Err("This argument already has a value");
+        }
+        self.value = value;
+        Ok(())
+    }
+    pub fn assign_type(&mut self, value: TypesArg) -> Result<(), &'static str> {
+        if self.type_ != TypesArg::None {
+            return Err("This argument already has a type");
+        }
+        self.type_ = value;
+        Ok(())
+    }
+    pub fn clear_value(&mut self) {
+        self.value = "".into();
+    }
+    pub fn clear_type(&mut self) {
+        self.type_ = TypesArg::None;
+    }
+}
+
 pub trait VarBuilder {
     /// Create a new variable with no known type.
     fn new() -> Self;
@@ -80,19 +122,19 @@ impl VarBuilder for Variable {
     }
 }
 
-#[derive(Debug, PartialEq,Clone)]
+#[derive(Debug, PartialEq, Clone)]
 pub enum ReturnTypes {
     Number,
     String,
-    None
+    None,
 }
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Func {
     pub name: String,
-    pub args: Vec<Variable>,
+    pub args: Vec<Arg>,
     pub body: Option<Box<Ast>>,
-    pub return_type:ReturnTypes
+    pub return_type: ReturnTypes,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -100,7 +142,7 @@ pub enum Type {
     Program,
     Variable(Variable),
     Function(Func),
-    /// A call to a function 
+    /// A call to a function
     //
     /// It contains the func that is being called under Func.name and the arguments passed into the
     /// function
