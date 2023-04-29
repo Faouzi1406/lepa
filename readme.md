@@ -26,3 +26,10 @@ Today was just me working on setting up llvm and making a start with compiling t
 - [x] Added support for parsing function return types
 - [x] Setup llvm to start working on compiling to llvm ir.
 - [x] Started working on the compiler, currently compiles a simple function just for testing, doesn't really work yet it's currently just for testing;
+
+# When 29-04-2023
+
+- [x] Changed the way parsing arguments works
+- [x] Tests for parsing args
+- [x] Compiler support return
+- [x] Compiler creating local variables
