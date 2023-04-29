@@ -1,17 +1,18 @@
 use std::io::Write;
 
 use lepa::{
+    compiler::Compile,
     logme,
     parser_lexer::lexer::lexer::{Lexer, Token},
-    parser_lexer::parser::{Parse, Parser}, compiler::Compile,
+    parser_lexer::parser::{Parse, Parser},
 };
 
 fn main() {
     let lexer = Token::lex(include_str!("../sample_code/main.lp").to_string());
     let parse = Parser::new(lexer).parse();
+
     let compile = parse.unwrap().compile();
     let main_file = std::fs::File::create("./assembly/main");
-
     match main_file {
         Ok(mut file) => {
             let write = file.write_all(compile.as_bytes());

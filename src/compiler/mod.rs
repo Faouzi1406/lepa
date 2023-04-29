@@ -1,14 +1,17 @@
+use std::process::exit;
+
 use inkwell::{
     builder::Builder, context::Context, execution_engine::ExecutionEngine, module::Module,
-    AddressSpace,
+    AddressSpace, values::FunctionValue,
 };
 
 static LOGGER: Logger = Logger(crate::errors::logger::LogLevels::Info);
 
 use crate::{
-    ast::{self, Ast, Func, TypesArg, Variable},
+    ast::{self, Ast, Func, Return, ReturnTypes, TypesArg, Variable, Type},
     errors::logger::{self, Log, Logger},
     logme,
+    parser_lexer::lexer::lexer::TokenType,
 };
 
 pub struct CodeGen<'ctx> {
@@ -48,6 +51,7 @@ trait Gen {
     fn compile_gen(&self, ast: Ast);
     fn gen_var(&self, var: &Variable);
     fn gen_func(&self, function: &Func);
+    fn gen_block_func(&self, function: &Func,ast:Vec<Ast>, func:&FunctionValue);
 }
 
 impl<'ctx> Gen for CodeGen<'ctx> {
@@ -111,6 +115,51 @@ impl<'ctx> Gen for CodeGen<'ctx> {
         let func = &self.module.add_function(&function.name, fn_type, None);
         let basic_block = &self.context.append_basic_block(*func, "entry");
         self.builder.position_at_end(*basic_block);
-        self.builder.build_return(None);
+        match &function.body.clone().unwrap().type_ {
+            Type::Block => {
+                let _ = &self.gen_block_func(function,  function.body.clone().unwrap().body, func);
+            }
+            token => LOGGER.error(&format!("Compiler expected function block but found: {:#?}", token))
+        }
+    }
+    fn gen_block_func(&self, function: &Func,ast: Vec<Ast>, func:&FunctionValue) {
+        for token in &ast {
+            match &token.type_ {
+                Type::Return(ret) => match &ret.type_ {
+                    ReturnTypes::Identifier => {
+                        let val = self.module.get_global(&ret.value);
+                        if val.is_some() {
+                            let val = val.unwrap();
+                            self.builder.build_return(Some(&val));
+                            break;
+                        }
+                        let param_ = function.get_arg_index_(&ret.value);
+                        if param_.is_some() {
+                            let val = func.get_nth_param(param_.unwrap());
+                            if val.is_some() {
+                                self.builder.build_return(Some(&val.unwrap()));
+                            }
+                        }
+                    }
+                    ReturnTypes::Number => {
+                        let num: i32 = ret.value.parse().unwrap();
+                        let var = self.context.i32_type();
+                        let num = var.const_int(num as u64, false);
+                        self.builder.build_return(Some(&num));
+                    }
+                    ReturnTypes::None => {
+                        self.builder.build_return(None);
+                    }
+                    type_ => LOGGER.error(&format!(
+                        "This token type is not yet supported for return bodies: {:#?}",
+                        type_
+                    )),
+                },
+                type_ => LOGGER.error(&format!(
+                    "This token type is not yet supported for function bodies: {:#?}",
+                    type_
+                )),
+            }
+        }
     }
 }

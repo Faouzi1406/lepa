@@ -1,10 +1,13 @@
 use crate::{
-    ast::{self, Arg, Ast, Func, ReturnTypes, Type, TypeVar, TypesArg, VarBuilder, Variable},
+    ast::{
+        self, Arg, Ast, Func, Return, ReturnTypes, Type, TypeVar, TypesArg, VarBuilder, Variable,
+    },
     errors::{
         error::ErrorBuilder,
         error_messages::{
             invalid_arr_no_end, invalid_function_body_syntax, invalid_function_call,
-            invalid_function_syntax_missing_id, invalid_var_syntax_token, non_ending_variable,
+            invalid_function_syntax_missing_id, invalid_return_no_end, invalid_var_syntax_token,
+            non_ending_variable,
         },
     },
     parser_lexer::lexer::lexer::{KeyWords, Operators, Token, TokenType},
@@ -270,6 +273,14 @@ trait ParseTokens {
     /// hello_world() // this would be a function call
     /// ```
     fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder>;
+    /// Parsing returns:
+    ///
+    /// # Example
+    ///
+    /// fn goodbye_world(string number) number {
+    ///  return number; // It parses this part.
+    /// }
+    fn parse_return(&mut self) -> Result<Return, ErrorBuilder>;
     // Parsing statements
     //
     // # Example
@@ -384,11 +395,11 @@ impl ParseTokens for Parser {
                     ast.body.push(self.parse_fn_call()?);
                 }
                 TokenType::OpenCurlyBracket => {
-                    // Recursion
-                    //
-                    // Imagine me writing a entire loop right here that does the exact same
-                    // as what this function is doing.... pleass don't ever do that. :)
                     ast.body.push(self.parse_block()?);
+                }
+                TokenType::Keyword(KeyWords::Return) => {
+                    let return_ = Ast::new(Type::Return(self.parse_return()?));
+                    ast.body.push(return_);
                 }
                 TokenType::CloseCurlyBracket => {
                     return Ok(ast);
@@ -471,9 +482,11 @@ impl ParseTokens for Parser {
                     }
                 }
                 TokenType::CloseBrace => {
-                    args.push(current_arg.clone());
-                    current_arg.clear_type();
-                    current_arg.clear_value();
+                    if current_arg.type_ != TypesArg::None && current_arg.value != "" {
+                        args.push(current_arg.clone());
+                        current_arg.clear_type();
+                        current_arg.clear_value();
+                    }
                     return Ok(args);
                 }
                 TokenType::OpenBrace => {
@@ -613,7 +626,41 @@ impl ParseTokens for Parser {
 
         return Ok(func);
     }
-    // fn parse_statement(&mut self) -> Result<Ast, ErrorBuilder> {
-    //
-    // }
+    fn parse_return(&mut self) -> Result<Return, ErrorBuilder> {
+        let prev = &self.prev_token.clone().unwrap();
+        let Some(up_until) = &self.up_until_token(TokenType::SemiColon) else {
+            return Err(invalid_return_no_end(prev.line));
+        };
+        for token in up_until {
+            match token.token_type {
+                TokenType::Number => {
+                    return Ok(Return {
+                        value: token.value.clone(),
+                        type_: ReturnTypes::Number,
+                    });
+                }
+                TokenType::String => {
+                    return Ok(Return {
+                        value: token.value.clone(),
+                        type_: ReturnTypes::String,
+                    });
+                }
+                TokenType::Identifier => {
+                    return Ok(Return {
+                        value: token.value.clone(),
+                        type_: ReturnTypes::Identifier,
+                    });
+                }
+                TokenType::SemiColon => {
+                    return Ok(Return {
+                        value: "void".to_string(),
+                        type_: ReturnTypes::None,
+                    });
+                }
+                _ => todo!("This is currently not supported yet, might get added in the future..."),
+            }
+        }
+
+        return Err(invalid_return_no_end(prev.line));
+    }
 }

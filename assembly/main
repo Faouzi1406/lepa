@@ -8,7 +8,7 @@ entry:
   ret void
 }
 
-define void @other(i32 %0, i32 %1) {
+define i32 @other() {
 entry:
-  ret void
+  ret i32 2
 }

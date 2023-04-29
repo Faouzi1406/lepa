@@ -126,7 +126,8 @@ impl VarBuilder for Variable {
 pub enum ReturnTypes {
     Number,
     String,
-    None,
+    Identifier,
+    None
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -135,6 +136,23 @@ pub struct Func {
     pub args: Vec<Arg>,
     pub body: Option<Box<Ast>>,
     pub return_type: ReturnTypes,
+}
+
+impl Func {
+    pub fn get_arg_index_(&self,value:&str) -> Option<u32> {
+        for (i,arg) in self.args.iter().enumerate() {
+            if arg.value == value {
+                return Some(i as u32);
+            }
+        }
+        return None;
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct Return {
+    pub value:String,
+    pub type_:ReturnTypes
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -148,6 +166,7 @@ pub enum Type {
     /// function
     FunctionCall(Func),
     Block,
+    Return(Return)
 }
 
 #[derive(Debug, PartialEq, Clone)]

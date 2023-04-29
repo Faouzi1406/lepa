@@ -106,3 +106,14 @@ pub fn invalid_arr_no_end(line: usize) -> ErrorBuilder {
         .file_name("todo:")
         .build_error()
 }
+
+pub fn invalid_return_no_end(line: usize) -> ErrorBuilder {
+    ErrorBuilder::new()
+        .message(format!(
+            "Invalid syntax found for return",
+        ))
+        .helper(format!("consider adding a end to the return statement: {}", ";".yellow().bold()))
+        .line(line)
+        .file_name("todo:")
+        .build_error()
+}
