@@ -1,13 +1,14 @@
 use crate::{
     ast::{
-        self, Arg, Ast, Func, Return, ReturnTypes, Type, TypeVar, TypesArg, VarBuilder, Variable,
+        self, Arg, Ast, Case, Func, Logic, Return, ReturnTypes, Type, TypeVar, TypesArg,
+        VarBuilder, Variable,
     },
     errors::{
-        error::ErrorBuilder,
+        error::{BuildError, ErrorBuilder},
         error_messages::{
             invalid_arr_no_end, invalid_function_body_syntax, invalid_function_call,
-            invalid_function_syntax_missing_id, invalid_return_no_end, invalid_var_syntax_token,
-            non_ending_variable,
+            invalid_function_syntax_missing_id, invalid_if_statement_body, invalid_return_no_end,
+            invalid_var_syntax_token, non_ending_variable,
         },
     },
     parser_lexer::lexer::lexer::{KeyWords, Operators, Token, TokenType},
@@ -157,6 +158,65 @@ pub trait WalkParser {
     fn advance_back(&mut self, n: usize);
 }
 
+pub trait CaseLogic {
+    fn get_case(&mut self) -> Result<Case, ErrorBuilder>;
+}
+
+impl CaseLogic for Parser {
+    fn get_case(&mut self) -> Result<Case, ErrorBuilder> {
+        let mut type_var_1 = TypeVar::None;
+        let mut type_var_2 = TypeVar::None;
+        let mut case = Case::None;
+
+        let val_1 = self.next().unwrap();
+        match val_1.token_type {
+            TokenType::Number => {
+                type_var_1 =  TypeVar::parse_number(val_1.value);
+            }
+            TokenType::Identifier => {
+                type_var_1 =  TypeVar::Identifier(val_1.value);
+            }
+            _ => return Err(ErrorBuilder::new()
+                .message("The first value of this if statement is either not supported yet or incorrect.")
+                .line(val_1.line)
+                .file_name("todo")
+                .build_error()),
+        };
+
+        let case_token = self.next().unwrap();
+        match case_token.token_type {
+            TokenType::Operator(op) => {
+                case = Case::from_op(op)?;
+            }
+            _ => {
+                return Err(ErrorBuilder::new()
+                    .message("Pleas replace your current case with a valid if case")
+                    .line(val_1.line)
+                    .file_name("todo")
+                    .build_error())
+            }
+        };
+
+        let val_2 = self.next().unwrap();
+        match val_2.token_type {
+            TokenType::Number => {
+                type_var_2 =  TypeVar::parse_number(val_2.value);
+            }
+            TokenType::Identifier => {
+                type_var_2 =  TypeVar::Identifier(val_2.value);
+            }
+            _ => return Err(ErrorBuilder::new()
+                .message("The first value of this if statement is either not supported yet or incorrect.")
+                .line(val_2.line)
+                .file_name("todo")
+                .build_error()),
+        };
+
+        let assign = case.assign(type_var_1, type_var_2);
+        Ok(assign)
+    }
+}
+
 impl WalkParser for Parser {
     fn peak_nth(&mut self, i: usize) -> Option<Token> {
         return Some(self.tokens.get(self.current_position + i)?.clone());
@@ -296,7 +356,7 @@ trait ParseTokens {
     //  println!("?");
     // }
     // ```
-    // fn parse_statement(&mut self) -> Result<Ast, ErrorBuilder>;
+    fn parse_statement(&mut self) -> Result<Logic, ErrorBuilder>;
 }
 
 impl Parse for Parser {
@@ -400,6 +460,10 @@ impl ParseTokens for Parser {
                 TokenType::Keyword(KeyWords::Return) => {
                     let return_ = Ast::new(Type::Return(self.parse_return()?));
                     ast.body.push(return_);
+                }
+                TokenType::Keyword(KeyWords::If) => {
+                    let if_ = Ast::new(Type::Logic(self.parse_statement()?));
+                    ast.body.push(if_);
                 }
                 TokenType::CloseCurlyBracket => {
                     return Ok(ast);
@@ -662,5 +726,39 @@ impl ParseTokens for Parser {
         }
 
         return Err(invalid_return_no_end(prev.line));
+    }
+    fn parse_statement(&mut self) -> Result<Logic, ErrorBuilder> {
+        let prev = self.prev_token.clone().unwrap();
+        let case = self.get_case()?;
+        let block = self.next().unwrap();
+        match block.token_type {
+            TokenType::OpenCurlyBracket => {
+                let body = &self.parse_block()?;
+                let Some(check_else) = self.next() else {
+                    return Ok(Logic::new(case,None, body.clone()));
+                };
+                match check_else.token_type {
+                    TokenType::Keyword(KeyWords::Else) => match self.next() {
+                        Some(val) => match val.token_type {
+                            TokenType::OpenCurlyBracket => {
+                                let body = &self.parse_block()?;
+                                return Ok(Logic::new(
+                                    case,
+                                    Some(Box::from(body.clone())),
+                                    body.clone(),
+                                ));
+                            }
+                            _ => return Err(invalid_if_statement_body(prev.line))
+                        },
+                        _ => return Err(invalid_if_statement_body(prev.line))
+                    },
+                    _ => {
+                        self.advance_back(1);
+                        return Ok(Logic::new(case, None, body.clone()));
+                    }
+                }
+            }
+            _ => return Err(invalid_if_statement_body(prev.line)),
+        }
     }
 }

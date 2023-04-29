@@ -1,10 +1,18 @@
-use crate::errors::error::{BuildError, ErrorBuilder};
+use crate::{
+    compiler::return_compiler::return_type_build,
+    errors::{
+        error::{BuildError, ErrorBuilder},
+        error_messages::invalid_if_statement_operator,
+    },
+    parser_lexer::lexer::lexer::Operators,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeVar {
+    Arr { values: Vec<TypeVar> },
     Number(i32),
     String(String),
-    Arr { values: Vec<TypeVar> },
+    Identifier(String),
     None,
 }
 
@@ -127,7 +135,7 @@ pub enum ReturnTypes {
     Number,
     String,
     Identifier,
-    None
+    None,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -139,8 +147,8 @@ pub struct Func {
 }
 
 impl Func {
-    pub fn get_arg_index_(&self,value:&str) -> Option<u32> {
-        for (i,arg) in self.args.iter().enumerate() {
+    pub fn get_arg_index_(&self, value: &str) -> Option<u32> {
+        for (i, arg) in self.args.iter().enumerate() {
             if arg.value == value {
                 return Some(i as u32);
             }
@@ -151,8 +159,61 @@ impl Func {
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Return {
-    pub value:String,
-    pub type_:ReturnTypes
+    pub value: String,
+    pub type_: ReturnTypes,
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub enum Case {
+    EqEq(TypeVar, TypeVar),
+    More(TypeVar, TypeVar),
+    MoreEq(TypeVar, TypeVar),
+    Less(TypeVar, TypeVar),
+    LessEq(TypeVar, TypeVar),
+    None,
+}
+
+impl Case {
+    pub fn assign(&self,one:TypeVar, two:TypeVar) -> Case {
+        match self {
+            Case::MoreEq(_, _) => Case::MoreEq(one, two),
+            Case::EqEq(_, _) => Case::EqEq(one, two),
+            Case::More(_, _) => Case::More(one, two),
+            Case::LessEq(_, _) => Case::LessEq(one, two),
+            Case::Less(_, _) => Case::Less(one, two),
+            Case::None => Case::None
+        }
+    }
+    pub fn from_op(value: Operators) -> Result<Case, ErrorBuilder> {
+        let value = match value {
+            Operators::EqEq => Case::EqEq(TypeVar::None, TypeVar::None),
+            Operators::Less => Case::Less(TypeVar::None, TypeVar::None),
+            Operators::LessEq => Case::LessEq(TypeVar::None, TypeVar::None),
+            Operators::More => Case::More(TypeVar::None, TypeVar::None),
+            Operators::MoreEq => Case::MoreEq(TypeVar::None, TypeVar::None),
+            Operators::Invalid(invalid) => {
+                return Err(invalid_if_statement_operator(Operators::Invalid(invalid)))
+            }
+            Operators::Eq => return Err(invalid_if_statement_operator(Operators::Eq)),
+        };
+        Ok(value)
+    }
+}
+#[derive(Debug, PartialEq, Clone)]
+pub struct Logic {
+    pub if_: Case,
+    pub do_: Box<Ast>,
+    pub else_: Option<Box<Ast>>,
+}
+
+impl Logic {
+    pub fn new(case:Case,else_: Option<Box<Ast>>, do_: Ast) -> Logic {
+        return Logic {
+            if_:case,
+            do_: Box::from(do_),
+            else_,
+        };
+    }
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -166,7 +227,8 @@ pub enum Type {
     /// function
     FunctionCall(Func),
     Block,
-    Return(Return)
+    Return(Return),
+    Logic(Logic),
 }
 
 #[derive(Debug, PartialEq, Clone)]

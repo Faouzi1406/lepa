@@ -1,6 +1,6 @@
 use colored::Colorize;
 
-use crate::parser_lexer::lexer::lexer::Token;
+use crate::parser_lexer::lexer::lexer::{Token, Operators};
 
 use super::error::{BuildError, ErrorBuilder};
 
@@ -114,6 +114,25 @@ pub fn invalid_return_no_end(line: usize) -> ErrorBuilder {
         ))
         .helper(format!("consider adding a end to the return statement: {}", ";".yellow().bold()))
         .line(line)
+        .file_name("todo:")
+        .build_error()
+}
+
+pub fn invalid_if_statement_operator(token:Operators) -> ErrorBuilder {
+    ErrorBuilder::new()
+        .message(format!(
+            "Found a invalid if statement operator",
+        ))
+        .helper(format!("Found: {:#?}", token))
+        .file_name("todo:")
+        .build_error()
+}
+pub fn invalid_if_statement_body(line:usize) -> ErrorBuilder {
+    ErrorBuilder::new()
+        .message(format!(
+            "Found a invalid if statement, the if statement doesn't have a body.",
+        ))
+        .helper(format!("Consider adding  a body: {:#?}", "-> { <<body>> } <-".bold().yellow()))
         .file_name("todo:")
         .build_error()
 }
