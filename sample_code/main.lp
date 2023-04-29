@@ -1,4 +1,4 @@
-let var = 1;
+let var = 20;
 
 fn main(number wow) {
 	let other = 2;
