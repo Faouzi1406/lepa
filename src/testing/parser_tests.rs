@@ -1,7 +1,7 @@
 #[cfg(test)]
 pub mod test_parser {
     use crate::{
-        ast::{AstVar, ReturnTypes, Type, TypeVar},
+        ast::ast::{AstVar, ReturnTypes, Type, TypeVar},
         parser_lexer::lexer::lexer::{KeyWords, Lexer, Operators, Token, TokenType},
         parser_lexer::parser::{Parse, Parser, WalkParser},
     };

@@ -1,23 +1,27 @@
+pub mod compile_function_call;
 pub mod return_compiler;
 pub mod var_compiler;
 
 use std::process::exit;
+use crate::ast::function::Func;
 
 use inkwell::{
     builder::Builder, context::Context, module::Module, values::FunctionValue, AddressSpace,
 };
 
-static LOGGER: Logger = Logger(crate::errors::logger::LogLevels::Info);
+pub static LOGGER: Logger = Logger(crate::errors::logger::LogLevels::Info);
 
 use crate::{
-    ast::{self, Ast, Func, Type, TypesArg, Variable},
+    ast::ast::{self, Ast, Type, TypesArg, Variable},
     errors::logger::{Log, Logger},
 };
 
+use self::compile_function_call::compile_function_call;
+
 pub struct CodeGen<'ctx> {
-    context: &'ctx Context,
-    module: Module<'ctx>,
-    builder: Builder<'ctx>,
+    pub context: &'ctx Context,
+    pub module: Module<'ctx>,
+    pub builder: Builder<'ctx>,
 }
 
 pub trait Compile {
@@ -37,7 +41,7 @@ impl Compile for Ast {
         };
 
         match &self.type_ {
-            crate::ast::Type::Program => {
+            crate::ast::ast::Type::Program => {
                 code_gen.compile_gen(self.clone());
             }
             _ => LOGGER.error(&"[COMPILER] Ast didn't start with program as first node."),
@@ -58,10 +62,10 @@ impl<'ctx> Gen for CodeGen<'ctx> {
     fn compile_gen(&self, ast: Ast) {
         for node in ast.body {
             match node.type_ {
-                crate::ast::Type::Variable(var) => {
+                crate::ast::ast::Type::Variable(var) => {
                     let _ = &self.gen_var(&var);
                 }
-                crate::ast::Type::Function(func) => {
+                crate::ast::ast::Type::Function(func) => {
                     let _ = &self.gen_func(&func);
                 }
                 _ => (),
@@ -71,7 +75,7 @@ impl<'ctx> Gen for CodeGen<'ctx> {
     fn gen_var(&self, var: &Variable) {
         let Variable { name, type_, .. } = var;
         match type_ {
-            crate::ast::TypeVar::Number(number) => {
+            crate::ast::ast::TypeVar::Number(number) => {
                 let num = self.context.i32_type();
                 let number = num.const_int(*number as u64, false);
                 let var = &self
@@ -139,10 +143,15 @@ impl<'ctx> Gen for CodeGen<'ctx> {
                 Type::Variable(var) => {
                     var_compiler::compile_var_func(&self, var.clone(), func);
                 }
-                type_ => LOGGER.error(&format!(
+                Type::FunctionCall(call) => {
+                    let _call = compile_function_call(&self, call);
+                }
+                type_ => {
+                    println!("huh? {:#?}", type_);
+                    LOGGER.error(&format!(
                     "This token type is not yet supported for function bodies: {:#?}",
                     type_
-                )),
+                ))},
             }
         }
     }

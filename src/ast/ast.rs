@@ -1,11 +1,12 @@
 use crate::{
-    compiler::return_compiler::return_type_build,
     errors::{
         error::{BuildError, ErrorBuilder},
         error_messages::invalid_if_statement_operator,
     },
     parser_lexer::lexer::lexer::Operators,
 };
+
+use super::function::Func;
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeVar {
@@ -138,24 +139,6 @@ pub enum ReturnTypes {
     None,
 }
 
-#[derive(Debug, PartialEq, Clone)]
-pub struct Func {
-    pub name: String,
-    pub args: Vec<Arg>,
-    pub body: Option<Box<Ast>>,
-    pub return_type: ReturnTypes,
-}
-
-impl Func {
-    pub fn get_arg_index_(&self, value: &str) -> Option<u32> {
-        for (i, arg) in self.args.iter().enumerate() {
-            if arg.value == value {
-                return Some(i as u32);
-            }
-        }
-        return None;
-    }
-}
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Return {

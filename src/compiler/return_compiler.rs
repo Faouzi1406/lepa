@@ -1,6 +1,7 @@
 use inkwell::values::FunctionValue;
 
-use crate::ast::{Func, Return, ReturnTypes};
+use crate::ast::ast::{Return, ReturnTypes};
+use crate::ast::function::Func;
 
 use super::CodeGen;
 

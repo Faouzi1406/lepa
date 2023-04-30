@@ -3,14 +3,15 @@ source_filename = "start"
 
 @var = addrspace(1) global i32 20
 
+define i32 @other() {
+entry:
+  ret i32 2
+}
+
 define void @main(i32 %0) {
 entry:
   %other = alloca i32, align 4
   store i32 2, i32* %other, align 4
+  %call = call i32 @other(i32 2)
   ret void
-}
-
-define i32 @other() {
-entry:
-  ret i32 2
 }

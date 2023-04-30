@@ -1,7 +1,10 @@
 use crate::{
     ast::{
-        self, Arg, Ast, Case, Func, Logic, Return, ReturnTypes, Type, TypeVar, TypesArg,
-        VarBuilder, Variable,
+        ast::{
+            Arg, Ast, Case, Logic, Return, ReturnTypes, Type, TypeVar, TypesArg, VarBuilder,
+            Variable,
+        },
+        function::Func,
     },
     errors::{
         error::{BuildError, ErrorBuilder},
@@ -609,7 +612,7 @@ impl ParseTokens for Parser {
 
         let body = Some(Box::from(self.parse_block()?));
 
-        let ast = Ast::new(Type::Function(ast::Func {
+        let ast = Ast::new(Type::Function(Func {
             name: next.value,
             args,
             body,
@@ -674,7 +677,7 @@ impl ParseTokens for Parser {
             None => return Err(invalid_function_call(prev.value, prev.line)),
         }
 
-        let func = Ast::new(Type::Function(Func {
+        let func = Ast::new(Type::FunctionCall(Func {
             name: prev.value.clone(),
             args: self.parse_args()?,
             body: None,
@@ -748,9 +751,9 @@ impl ParseTokens for Parser {
                                     body.clone(),
                                 ));
                             }
-                            _ => return Err(invalid_if_statement_body(prev.line))
+                            _ => return Err(invalid_if_statement_body(prev.line)),
                         },
-                        _ => return Err(invalid_if_statement_body(prev.line))
+                        _ => return Err(invalid_if_statement_body(prev.line)),
                     },
                     _ => {
                         self.advance_back(1);

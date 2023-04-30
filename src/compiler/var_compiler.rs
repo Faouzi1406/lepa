@@ -1,6 +1,6 @@
 use inkwell::values::FunctionValue;
 
-use crate::ast::{TypeVar, Variable};
+use crate::ast::ast::{TypeVar, Variable};
 
 use super::CodeGen;
 
