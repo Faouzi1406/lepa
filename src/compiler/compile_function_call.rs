@@ -1,5 +1,8 @@
-use super::{CodeGen, LOGGER};
-use crate::{ast::{function::Func, ast::TypesArg}, errors::logger::Log};
+use super::{std_compiler::Std, CodeGen, LOGGER};
+use crate::{
+    ast::{ast::TypesArg, function::Func},
+    errors::logger::Log,
+};
 
 pub fn compile_function_call(code: &CodeGen, function: &Func) -> Result<(), String> {
     let vars = &function.args;
@@ -19,21 +22,28 @@ pub fn compile_function_call(code: &CodeGen, function: &Func) -> Result<(), Stri
                 args.push(int.into());
             }
             TypesArg::String => {
-                LOGGER.error(&format!(
-                        "Found a invalid function argument, {} is of type string, this is not supported yet :(.",
-                        arg.value
-                    ));
+                let bytes = &arg.value;
+                let value = code.context.const_string(bytes.as_bytes(), false);
+                args.push(value.into());
             }
         }
     }
 
+    let std = code.std_functions(function, args.clone());
+    match std {
+        Ok(_) => {
+            return Ok(());
+        }
+        Err(_) => (),
+    }
+
     let Some(func) = code.module.get_function(&function.name) else {
-        let error = format!("Call to function that doesn't exist {} on line", &function.name);
-        LOGGER.error(&error);
-        return Err(error)
+                let error = format!("Call to function that doesn't exist {} on line", &function.name);
+                LOGGER.error(&error);
+                return Err(error)
     };
 
-    let _call = code.builder.build_call(func, &args, "call");
+    let _ = code.builder.build_call(func, &args, "call");
 
     return Ok(());
 }

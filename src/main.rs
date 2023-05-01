@@ -10,6 +10,7 @@ use lepa::{
 fn main() {
     let lexer = Token::lex(include_str!("../sample_code/main.lp").to_string());
     let parse = Parser::new(lexer).parse();
+    println!("{:#?}", parse);
 
     let compile = parse.unwrap().compile();
     let main_file = std::fs::File::create("./assembly/main");

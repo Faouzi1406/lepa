@@ -1,11 +1,13 @@
 let var = 20;
 
-fn other() number {
-	return 2;
+fn wow() {
+	printf("Goodbye world! \n"); 
+	return;
 }
 
-fn main(number wow) {
+fn main() {
 	let other = 2;
-	other(2);
+	printf("Whut?! \n"); 
+        wow();
 	return;
 }
