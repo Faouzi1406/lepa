@@ -5,13 +5,14 @@ use crate::{
             Variable,
         },
         function::Func,
+        use_::Use,
     },
     errors::{
         error::{BuildError, ErrorBuilder},
         error_messages::{
             invalid_arr_no_end, invalid_function_body_syntax, invalid_function_call,
             invalid_function_syntax_missing_id, invalid_if_statement_body, invalid_return_no_end,
-            invalid_var_syntax_token, non_ending_variable,
+            invalid_use, invalid_var_syntax_token, non_ending_variable,
         },
     },
     parser_lexer::lexer::lexer::{KeyWords, Operators, Token, TokenType},
@@ -344,6 +345,7 @@ trait ParseTokens {
     ///  return number; // It parses this part.
     /// }
     fn parse_return(&mut self) -> Result<Return, ErrorBuilder>;
+    fn parse_use(&mut self) -> Result<Use, ErrorBuilder>;
     // Parsing statements
     //
     // # Example
@@ -368,6 +370,10 @@ impl Parse for Parser {
         while let Some(token) = self.next() {
             match token.token_type {
                 // Parsing variables starting with let
+                TokenType::Keyword(KeyWords::Use) => {
+                    let use_ = Ast::new(Type::Use(self.parse_use()?));
+                    ast.body.push(use_);
+                }
                 TokenType::Keyword(KeyWords::Let) => {
                     let var = self.parse_var()?;
                     ast.body.push(Ast::new(Type::Variable(var)));
@@ -384,7 +390,7 @@ impl Parse for Parser {
                 TokenType::Comment => {
                     continue;
                 }
-                _ => todo!("Haven't added parsing for these tokens yet"),
+                token => todo!("Haven't added parsing for these tokens yet {token:#?}"),
             }
         }
         return Ok(ast);
@@ -447,6 +453,10 @@ impl ParseTokens for Parser {
         while let Some(token) = self.next() {
             line += token.line;
             match token.token_type {
+                TokenType::Keyword(KeyWords::Use) => {
+                    let use_ = Ast::new(Type::Use(self.parse_use()?));
+                    ast.body.push(use_);
+                }
                 TokenType::Keyword(KeyWords::Let) => {
                     let ast_var = Ast::new(Type::Variable(self.parse_var()?));
                     ast.body.push(ast_var);
@@ -762,6 +772,25 @@ impl ParseTokens for Parser {
                 }
             }
             _ => return Err(invalid_if_statement_body(prev.line)),
+        }
+    }
+    fn parse_use(&mut self) -> Result<Use, ErrorBuilder> {
+        let tokens = &self.next();
+        let prev = &self.prev_token.clone().unwrap();
+        match tokens {
+            Some(file) => match file.token_type {
+                TokenType::String => {
+                    let Some(end_use) = self.next() else {
+                                return Err(invalid_use(Some(file.value.clone()), prev.line))
+                    };
+                    if end_use.token_type != TokenType::SemiColon {
+                        return Err(invalid_use(Some(file.value.clone()), prev.line));
+                    }
+                    return Ok(Use::new(file.value.clone()));
+                }
+                _ => return Err(invalid_use(None, prev.line)),
+            },
+            None => return Err(invalid_use(None, prev.line)),
         }
     }
 }

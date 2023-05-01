@@ -1,6 +1,6 @@
 use colored::Colorize;
 
-use crate::parser_lexer::lexer::lexer::{Token, Operators};
+use crate::parser_lexer::lexer::lexer::{Operators, Token};
 
 use super::error::{BuildError, ErrorBuilder};
 
@@ -98,10 +98,11 @@ pub fn invalid_function_call(name: String, line: usize) -> ErrorBuilder {
 
 pub fn invalid_arr_no_end(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!(
-            "Invalid syntax found for array",
+        .message(format!("Invalid syntax found for array",))
+        .helper(format!(
+            "consider adding a end to the array {}",
+            "]".yellow().bold()
         ))
-        .helper(format!("consider adding a end to the array {}", "]".yellow().bold()))
         .line(line)
         .file_name("todo:")
         .build_error()
@@ -109,30 +110,51 @@ pub fn invalid_arr_no_end(line: usize) -> ErrorBuilder {
 
 pub fn invalid_return_no_end(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!(
-            "Invalid syntax found for return",
+        .message(format!("Invalid syntax found for return",))
+        .helper(format!(
+            "consider adding a end to the return statement: {}",
+            ";".yellow().bold()
         ))
-        .helper(format!("consider adding a end to the return statement: {}", ";".yellow().bold()))
         .line(line)
         .file_name("todo:")
         .build_error()
 }
 
-pub fn invalid_if_statement_operator(token:Operators) -> ErrorBuilder {
+pub fn invalid_if_statement_operator(token: Operators) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!(
-            "Found a invalid if statement operator",
-        ))
+        .message(format!("Found a invalid if statement operator",))
         .helper(format!("Found: {:#?}", token))
         .file_name("todo:")
         .build_error()
 }
-pub fn invalid_if_statement_body(line:usize) -> ErrorBuilder {
+pub fn invalid_if_statement_body(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
         .message(format!(
             "Found a invalid if statement, the if statement doesn't have a body.",
         ))
-        .helper(format!("Consider adding  a body: {:#?}", "-> { <<body>> } <-".bold().yellow()))
+        .helper(format!(
+            "Consider adding  a body: {:#?}",
+            "-> { <<body>> } <-".bold().yellow()
+        ))
         .file_name("todo:")
         .build_error()
+}
+pub fn invalid_use(file: Option<String>, line: usize) -> ErrorBuilder {
+    match file {
+        Some(file) => ErrorBuilder::new()
+            .file_name(format!("Found invalid use statement: use {file}"))
+            .helper("Consider adding and ending semicolon")
+            .line(line)
+            .build_error(),
+        None => ErrorBuilder::new()
+            .file_name(format!(
+                "Found invalid use statement: no filename was found"
+            ))
+            .helper(format!(
+                "Consider adding a file name: {}",
+                "use \"file\"".bold().yellow()
+            ))
+            .line(line)
+            .build_error(),
+    }
 }

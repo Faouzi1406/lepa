@@ -38,7 +38,8 @@ pub mod lexer {
         For,
         Return,
         Number,
-        String
+        String,
+        Use,
     }
 
     /// All the operators
@@ -258,6 +259,7 @@ pub mod lexer {
                 "number" =>  Some(Token::new(TokenType::Keyword(KeyWords::Number), "number", l)),
                 "string" =>  Some(Token::new(TokenType::Keyword(KeyWords::String), "string", l)),
                 "return" =>  Some(Token::new(TokenType::Keyword(KeyWords::Return), "return", l)),
+                "use" => Some(Token::new(TokenType::Keyword(KeyWords::Use), "use", l)),
                 value if value == "true" || value == "false" => {
                     Some(Token::new(TokenType::Keyword(KeyWords::Bool), value, l))
                 }

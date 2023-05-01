@@ -1,3 +1,5 @@
+use "other.lp";
+
 let var = 20;
 
 fn wow() {

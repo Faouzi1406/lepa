@@ -6,7 +6,7 @@ use crate::{
     parser_lexer::lexer::lexer::Operators,
 };
 
-use super::function::Func;
+use super::{function::Func, use_::Use};
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeVar {
@@ -211,6 +211,7 @@ pub enum Type {
     FunctionCall(Func),
     Block,
     Return(Return),
+    Use(Use),
     Logic(Logic),
 }
 

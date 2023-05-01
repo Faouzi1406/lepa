@@ -1,6 +1,7 @@
-use std::io::Write;
+use std::{io::Write, fs};
 
 use lepa::{
+    ast::use_::{GetUses, Use, CompileUses},
     compiler::Compile,
     logme,
     parser_lexer::lexer::lexer::{Lexer, Token},
@@ -8,12 +9,21 @@ use lepa::{
 };
 
 fn main() {
-    let lexer = Token::lex(include_str!("../sample_code/main.lp").to_string());
-    let parse = Parser::new(lexer).parse();
-    println!("{:#?}", parse);
+    let files = fs::read_to_string("./main.lp");
+    let lexer = Token::lex(files.unwrap());
+    let parse = Parser::new(lexer).parse().unwrap();
 
-    let compile = parse.unwrap().compile();
-    let main_file = std::fs::File::create("./assembly/main");
+    let uses = Use::get_use(parse.clone()).unwrap();
+    let compile_uses = uses.compile().unwrap();
+
+    for compile in compile_uses {
+        let mut file = fs::File::create("./target/".to_string()  + &compile.file_name).unwrap();
+        file.write_all(compile.contents.as_bytes()).expect("write");
+    }
+
+    let compile = parse.compile();
+    let main_file = std::fs::File::create("./target/main");
+
     match main_file {
         Ok(mut file) => {
             let write = file.write_all(compile.as_bytes());
