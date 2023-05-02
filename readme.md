@@ -36,7 +36,10 @@ Today was just me working on setting up llvm and making a start with compiling t
 
 # When 30-04-2023
 
--[x] Support for calling functions from variables 
--[x] Printf support; This is bassicly the beginning point of adding the std library for the langauge.
--[x] Const support; Added support for creating global constant variables, this means they are assured to never be reassigned or changed in anyway, or atleast it will later. 
--[x] Support for use; Using different files
+- [x] Support for calling functions from variables 
+
+- [x] Printf support; This is bassicly the beginning point of adding the std library for the langauge.
+
+- [x] Const support; Added support for creating global constant variables, this means they are assured to never be reassigned or changed in anyway, or atleast it will later. 
+
+- [x] Support for use; Using different files
