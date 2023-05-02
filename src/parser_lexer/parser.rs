@@ -537,7 +537,6 @@ impl ParseTokens for Parser {
                 TokenType::String => {
                     let val = current_arg.assign_value(token.value.clone());
                     if val.is_err() {
-                        // Todo: Add better error for this case
                         return Err(invalid_var_syntax_token(token));
                     }
                     let ass_type = current_arg.assign_type(TypesArg::String);
@@ -557,7 +556,7 @@ impl ParseTokens for Parser {
                     }
                 }
                 TokenType::CloseBrace => {
-                    if current_arg.type_ != TypesArg::None && current_arg.value != "" {
+                    if  current_arg.value != "" {
                         args.push(current_arg.clone());
                         current_arg.clear_type();
                         current_arg.clear_value();

@@ -3,7 +3,7 @@ use "other.lp";
 let var = 20;
 
 fn wow() {
-	printf("Isn't this so strange...! number: %d -- ", var); 
+	printf("Isn't this so strange...! number: %s %d %s -- ", "this is sutpid!!", var, "\n"); 
 	lol();
 	return;
 }

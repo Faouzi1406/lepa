@@ -1,10 +1,7 @@
 use std::{fs, io::Write};
 
 use lepa::{
-    ast::{
-        ast::Ast,
-        use_::{CompileUses, GetUses, Use},
-    },
+    ast::{use_::{CompileUses, GetUses, Use}, ast::Ast},
     compiler::Compile,
     logme,
     parser_lexer::lexer::lexer::{Lexer, Token},
@@ -26,8 +23,8 @@ fn main() {
 
     let parse = Parser::new(tokens_now).parse().unwrap();
     let compile = parse.compile();
-    let main_file = std::fs::File::create("./target/main");
 
+    let main_file = std::fs::File::create("./target/main");
     match main_file {
         Ok(mut file) => {
             let write = file.write_all(compile.as_bytes());

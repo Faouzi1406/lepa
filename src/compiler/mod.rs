@@ -2,11 +2,11 @@ pub mod compile_function_call;
 pub mod return_compiler;
 pub mod std_compiler;
 pub mod var_compiler;
+pub mod get_args_function;
 
 use crate::ast::function::Func;
 use std::{
     env::current_dir,
-    os::unix::process::CommandExt,
     process::{exit, Command},
 };
 

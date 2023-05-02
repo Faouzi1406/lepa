@@ -58,11 +58,9 @@ impl<'ctx> Std for CodeGen<'ctx> {
                 let printf = &self.module.get_function("printf");
 
                 if printf.is_some() {
-                    let _ = &self.builder.build_call(
-                        printf.unwrap(),
-                        &args_values,
-                        "printf_call",
-                    );
+                    let _ = &self
+                        .builder
+                        .build_call(printf.unwrap(), &args_values.clone(), "printf_call");
                     return;
                 }
 
@@ -79,12 +77,9 @@ impl<'ctx> Std for CodeGen<'ctx> {
                     .module
                     .add_function("printf", *print_f, Some(Linkage::External));
 
-
-                let _ = &self.builder.build_call(
-                    *printf,
-                    &args_values,
-                    "printf_call",
-                );
+                let call = &self
+                    .builder
+                    .build_call(*printf, &args_values, "printf_call");
             }
             value => {
                 LOGGER.error(&format!(
