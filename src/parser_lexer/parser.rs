@@ -1,11 +1,11 @@
+use crate::ast::variable::TypeVar;
+use crate::ast::variable::Variable;
 use crate::{
     ast::{
-        ast::{
-            Arg, Ast, Case, Logic, Return, ReturnTypes, Type, TypeVar, TypesArg, VarBuilder,
-            Variable,
-        },
+        ast::{Arg, Ast, Case, Logic, Return, ReturnTypes, Type, TypesArg},
         function::Func,
         use_::Use,
+        variable::VarBuilder,
     },
     errors::{
         error::{BuildError, ErrorBuilder},
@@ -230,7 +230,7 @@ impl WalkParser for Parser {
     }
     fn advance_back(&mut self, n: usize) {
         self.current_position -= n;
-        self.prev_token = Some(self.tokens[self.current_position].clone());
+        self.prev_token = Some(self.tokens[self.current_position - 1].clone());
     }
     fn up_until_token(&mut self, t: TokenType) -> Option<Vec<Token>> {
         let mut tokens = Vec::new();
@@ -336,7 +336,7 @@ trait ParseTokens {
     ///
     /// hello_world() // this would be a function call
     /// ```
-    fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder>;
+    fn parse_fn_call(&mut self) -> Result<Func, ErrorBuilder>;
     /// Parsing returns:
     ///
     /// # Example
@@ -389,7 +389,8 @@ impl Parse for Parser {
                     ast.body.push(self.parse_block()?);
                 }
                 TokenType::Identifier => {
-                    ast.body.push(self.parse_fn_call()?);
+                    ast.body
+                        .push(Ast::new(Type::FunctionCall(self.parse_fn_call()?)));
                 }
                 TokenType::Comment => {
                     continue;
@@ -420,7 +421,27 @@ impl ParseTokens for Parser {
                         TokenType::Identifier => {
                             // We assign the name and use the question mark operator which will
                             // force returning the assign error if there is one.
-                            var.name(token.value)?;
+                            let assign_ = var.name(token.value.clone());
+                            match assign_ {
+                                Ok(()) => (),
+                                Err(_) => {
+                                    let Some(parse_next) = parser.next() else {
+                                        return Err(invalid_var_syntax_token(token))
+                                    };
+                                    match parse_next.token_type {
+                                        TokenType::SemiColon => {
+                                            let ass_t = var.type_(TypeVar::Identifier(token.value));
+                                        }
+                                        TokenType::OpenBrace => {
+                                            parser.advance_back(1);
+                                            let ass_t = var.type_(TypeVar::FunctionCall(
+                                                parser.parse_fn_call()?,
+                                            ));
+                                        }
+                                        _ => return Err(invalid_var_syntax_token(token)),
+                                    }
+                                }
+                            }
                         }
                         TokenType::String => {
                             // We assign the type and use the question mark operator which will
@@ -469,7 +490,8 @@ impl ParseTokens for Parser {
                     ast.body.push(self.parse_fn()?);
                 }
                 TokenType::Identifier => {
-                    ast.body.push(self.parse_fn_call()?);
+                    ast.body
+                        .push(Ast::new(Type::FunctionCall(self.parse_fn_call()?)));
                 }
                 TokenType::OpenCurlyBracket => {
                     ast.body.push(self.parse_block()?);
@@ -673,7 +695,7 @@ impl ParseTokens for Parser {
         }
         return Err(invalid_arr_no_end(line));
     }
-    fn parse_fn_call(&mut self) -> Result<Ast, ErrorBuilder> {
+    fn parse_fn_call(&mut self) -> Result<Func, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
         let next = self.peak_nth(0);
 
@@ -686,12 +708,12 @@ impl ParseTokens for Parser {
             None => return Err(invalid_function_call(prev.value, prev.line)),
         }
 
-        let func = Ast::new(Type::FunctionCall(Func {
+        let func = Func {
             name: prev.value.clone(),
             args: self.parse_args()?,
             body: None,
             return_type: ReturnTypes::None,
-        }));
+        };
 
         let Some(close) = self.next() else {
             return Err(non_ending_variable(prev.value, prev.line));

@@ -1,9 +1,8 @@
+ use lepa::{compiler::Compile, logme, ast::ast::Ast};
 use std::{fs, io::Write};
 
 use lepa::{
-    ast::{use_::{CompileUses, GetUses, Use}, ast::Ast},
-    compiler::Compile,
-    logme,
+    ast::use_::{CompileUses, GetUses, Use},
     parser_lexer::lexer::lexer::{Lexer, Token},
     parser_lexer::parser::{Parse, Parser},
 };
@@ -22,8 +21,9 @@ fn main() {
     tokens_now.append(&mut lexer);
 
     let parse = Parser::new(tokens_now).parse().unwrap();
+    println!("{:#?}", parse);
     let compile = parse.compile();
-
+    //
     let main_file = std::fs::File::create("./target/main");
     match main_file {
         Ok(mut file) => {
@@ -36,6 +36,5 @@ fn main() {
             logme!("error", val);
         }
     }
-
-    Ast::create_binary("/target/main");
+    // Ast::create_binary("/target/main");
 }

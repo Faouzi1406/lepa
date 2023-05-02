@@ -2,9 +2,10 @@ pub mod compile_function_call;
 pub mod get_args_function;
 pub mod return_compiler;
 pub mod std_compiler;
+pub mod validation;
 pub mod var_compiler;
 
-use crate::ast::{ast::VarBuilder, function::Func};
+use crate::ast::function::Func;
 use std::{
     env::current_dir,
     process::{exit, Command},
@@ -18,8 +19,9 @@ use inkwell::{
 
 pub static LOGGER: Logger = Logger(crate::errors::logger::LogLevels::Info);
 
+use crate::ast::variable::Variable;
 use crate::{
-    ast::ast::{self, Ast, Type, TypesArg, Variable},
+    ast::ast::{self, Ast, Type, TypesArg},
     errors::logger::{Log, Logger},
 };
 
@@ -132,7 +134,7 @@ impl<'ctx> Gen for CodeGen<'ctx> {
     fn gen_var(&self, var: &Variable) {
         let Variable { name, type_, .. } = var;
         match type_ {
-            crate::ast::ast::TypeVar::Number(number) => {
+            crate::ast::variable::TypeVar::Number(number) => {
                 let num = self.context.i32_type();
                 let number = num.const_int(*number as u64, false);
                 let var = &self
@@ -214,7 +216,7 @@ impl<'ctx> Gen for CodeGen<'ctx> {
                     }
                 }
                 Type::Variable(var) => {
-                    var_compiler::compile_var_func(&self, var.clone(), func);
+                    var_compiler::compile_var_func(&self, var.clone());
                 }
                 Type::Function(func) => {
                     let _ = &self.gen_func(func);
