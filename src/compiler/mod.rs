@@ -62,9 +62,10 @@ impl Compile for Ast {
 
         let run_llvm = llvm.spawn();
         match run_llvm {
-            Ok(value) => {
+            Ok(_) => {
                 let mut clang = Command::new("clang");
-                clang.arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name + ".bc");
+                clang
+                    .arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name + ".bc");
                 clang
                     .arg("-o")
                     .arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name);
