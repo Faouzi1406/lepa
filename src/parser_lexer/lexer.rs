@@ -40,6 +40,7 @@ pub mod lexer {
         Number,
         String,
         Use,
+        Const
     }
 
     /// All the operators
@@ -272,6 +273,7 @@ pub mod lexer {
                     l,
                 )),
                 "use" => Some(Token::new(TokenType::Keyword(KeyWords::Use), "use", l)),
+                "const" => Some(Token::new(TokenType::Keyword(KeyWords::Const), "const", l)),
                 value if value == "true" || value == "false" => {
                     Some(Token::new(TokenType::Keyword(KeyWords::Bool), value, l))
                 }

@@ -1,4 +1,4 @@
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
 use colored::Colorize;
 
@@ -89,6 +89,8 @@ pub trait Log {
     /// log.error("This is a info log"); // This will be printed to terminal
     /// ```
     fn error<T: Debug>(&self, input: &T);
+    /// Does the same as error but only where T is displayable
+    fn display_error<T: Display>(&self, input: &T);
 }
 
 impl Log for Logger {
@@ -98,7 +100,7 @@ impl Log for Logger {
     fn info<T: Debug>(&self, input: &T) {
         match self.0 {
             LogLevels::Info => {
-                println!("{} {:?}", "[INFO]".blue().bold(), input)
+                println!("{} {:#?}", "[INFO]".blue().bold(), input)
             }
             _ => (),
         }
@@ -106,14 +108,19 @@ impl Log for Logger {
     fn warning<T: Debug>(&self, input: &T) {
         match &self.0 {
             LogLevels::Info | LogLevels::Warning => {
-                println!("{} {:?}", "[WARNING]".yellow().bold(), input)
+                println!("{} {:#?}", "[WARNING]".yellow().bold(), input)
             }
             _ => (),
         }
     }
     fn error<T: Debug>(&self, input: &T) {
         match &self.0 {
-            _ => println!("{} {:?}", "[Error]".red().bold(), input),
+            _ => println!("{} {:#?}", "[Error]".red().bold(), input),
+        }
+    }
+    fn display_error<T: Display>(&self, input: &T) {
+        match &self.0 {
+            _ => println!("{} {}", "[Error]".red().bold(), input),
         }
     }
 }

@@ -1,6 +1,6 @@
 use "other.lp";
 
-let var = 20;
+const var = 20;
 
 fn wow() {
 	printf("Isn't this so strange...! number: %s %d %s -- ", "this is sutpid!!", var, "\n"); 

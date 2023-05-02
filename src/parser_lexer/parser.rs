@@ -374,6 +374,10 @@ impl Parse for Parser {
                     let use_ = Ast::new(Type::Use(self.parse_use()?));
                     ast.body.push(use_);
                 }
+                TokenType::Keyword(KeyWords::Const) => {
+                    let var = self.parse_var()?;
+                    ast.body.push(Ast::new(Type::ConstVar(var)));
+                }
                 TokenType::Keyword(KeyWords::Let) => {
                     let var = self.parse_var()?;
                     ast.body.push(Ast::new(Type::Variable(var)));
@@ -506,24 +510,22 @@ impl ParseTokens for Parser {
                     current_arg.clear_type();
                     current_arg.clear_value();
                 }
-                TokenType::Keyword(keyword) => {
-                    match keyword {
-                        KeyWords::Number => {
-                            let ass_type = current_arg.assign_type(TypesArg::Number);
-                            if ass_type.is_err() {
-                                return Err(invalid_var_syntax_token(token));
-                            }
+                TokenType::Keyword(keyword) => match keyword {
+                    KeyWords::Number => {
+                        let ass_type = current_arg.assign_type(TypesArg::Number);
+                        if ass_type.is_err() {
+                            return Err(invalid_var_syntax_token(token));
                         }
-
-                        KeyWords::String => {
-                            let ass_type = current_arg.assign_type(TypesArg::String);
-                            if ass_type.is_err() {
-                                return Err(invalid_var_syntax_token(token));
-                            }
-                        }
-                        _ => todo!("Add a good error message for this case"),
                     }
-                }
+
+                    KeyWords::String => {
+                        let ass_type = current_arg.assign_type(TypesArg::String);
+                        if ass_type.is_err() {
+                            return Err(invalid_var_syntax_token(token));
+                        }
+                    }
+                    _ => todo!("Add a good error message for this case"),
+                },
                 TokenType::Identifier => {
                     let val = current_arg.assign_value(token.value.clone());
                     if current_arg.type_ == TypesArg::None {
@@ -556,7 +558,7 @@ impl ParseTokens for Parser {
                     }
                 }
                 TokenType::CloseBrace => {
-                    if  current_arg.value != "" {
+                    if current_arg.value != "" {
                         args.push(current_arg.clone());
                         current_arg.clear_type();
                         current_arg.clear_value();
@@ -683,7 +685,6 @@ impl ParseTokens for Parser {
             }
             None => return Err(invalid_function_call(prev.value, prev.line)),
         }
-
 
         let func = Ast::new(Type::FunctionCall(Func {
             name: prev.value.clone(),

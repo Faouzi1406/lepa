@@ -1,15 +1,16 @@
 pub mod compile_function_call;
+pub mod get_args_function;
 pub mod return_compiler;
 pub mod std_compiler;
 pub mod var_compiler;
-pub mod get_args_function;
 
-use crate::ast::function::Func;
+use crate::ast::{ast::VarBuilder, function::Func};
 use std::{
     env::current_dir,
     process::{exit, Command},
 };
 
+use colored::Colorize;
 use inkwell::{
     basic_block::BasicBlock, builder::Builder, context::Context, module::Module,
     values::FunctionValue, AddressSpace,
@@ -114,8 +115,12 @@ impl<'ctx> Gen for CodeGen<'ctx> {
     fn compile_gen(&self, ast: Ast) {
         for node in ast.body {
             match node.type_ {
-                crate::ast::ast::Type::Variable(var) => {
+                crate::ast::ast::Type::ConstVar(var) => {
                     let _ = &self.gen_var(&var);
+                }
+                crate::ast::ast::Type::Variable(var) => {
+                    LOGGER.display_error(&format!(
+                            "Found let keyword outside of function body, consider changing this to: {} {} {} {:#?}; ignoring variable", "const".yellow().bold(), var.name.blue().bold(), "=", var.type_))
                 }
                 crate::ast::ast::Type::Function(func) => {
                     let _ = &self.gen_func(&func);

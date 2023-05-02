@@ -201,6 +201,7 @@ impl Logic {
 #[derive(Debug, PartialEq, Clone)]
 pub enum Type {
     Program,
+    ConstVar(Variable),
     Variable(Variable),
     Function(Func),
     /// A call to a function
@@ -211,7 +212,7 @@ pub enum Type {
     Block,
     Return(Return),
     Use(Use),
-    Logic(Logic),
+    Logic(Logic)
 }
 
 #[derive(Debug, PartialEq, Clone)]
