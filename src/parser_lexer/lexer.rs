@@ -179,7 +179,7 @@ pub mod lexer {
                     self.next();
                     while let Some(char) = self.next() {
                         match char {
-                            '\n'  => return Token::new(TokenType::Comment, comment, l),
+                            '\n' => return Token::new(TokenType::Comment, comment, l),
                             _ => comment.push(char),
                         };
                     }
@@ -256,9 +256,21 @@ pub mod lexer {
                 "else" => Some(Token::new(TokenType::Keyword(KeyWords::Else), "else", l)),
                 "while" => Some(Token::new(TokenType::Keyword(KeyWords::While), "while", l)),
                 "for" => Some(Token::new(TokenType::Keyword(KeyWords::For), "for", l)),
-                "number" =>  Some(Token::new(TokenType::Keyword(KeyWords::Number), "number", l)),
-                "string" =>  Some(Token::new(TokenType::Keyword(KeyWords::String), "string", l)),
-                "return" =>  Some(Token::new(TokenType::Keyword(KeyWords::Return), "return", l)),
+                "number" => Some(Token::new(
+                    TokenType::Keyword(KeyWords::Number),
+                    "number",
+                    l,
+                )),
+                "string" => Some(Token::new(
+                    TokenType::Keyword(KeyWords::String),
+                    "string",
+                    l,
+                )),
+                "return" => Some(Token::new(
+                    TokenType::Keyword(KeyWords::Return),
+                    "return",
+                    l,
+                )),
                 "use" => Some(Token::new(TokenType::Keyword(KeyWords::Use), "use", l)),
                 value if value == "true" || value == "false" => {
                     Some(Token::new(TokenType::Keyword(KeyWords::Bool), value, l))
@@ -283,7 +295,7 @@ pub mod lexer {
                     ',' => vec.push(Token::new(TokenType::Comma, ",", line)),
                     '+' => vec.push(Token::new(TokenType::Plus, "+", line)),
                     '-' => vec.push(Token::new(TokenType::Min, "-", line)),
-                    '/'  => vec.push(cursor.comment_token(line)), 
+                    '/' => vec.push(cursor.comment_token(line)),
                     '.' => vec.push(Token::new(TokenType::Dot, ".", line)),
                     '}' => vec.push(Token::new(TokenType::CloseCurlyBracket, "}", line)),
                     '{' => vec.push(Token::new(TokenType::OpenCurlyBracket, "{", line)),

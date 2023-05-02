@@ -4,9 +4,9 @@
 ///  friendly.
 ///
 pub mod error;
-///  The logger, this can be used to log errors/warning/info without directly stopping compilation.
-///  This could be usefull if the warning doesn't need to stop compilation etc.
-pub mod logger;
 /// Error messages, these are error messages that will happen a lot around applications, non ending
 /// variables etc.
 pub mod error_messages;
+///  The logger, this can be used to log errors/warning/info without directly stopping compilation.
+///  This could be usefull if the warning doesn't need to stop compilation etc.
+pub mod logger;

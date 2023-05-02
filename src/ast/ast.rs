@@ -139,7 +139,6 @@ pub enum ReturnTypes {
     None,
 }
 
-
 #[derive(Debug, PartialEq, Clone)]
 pub struct Return {
     pub value: String,
@@ -157,14 +156,14 @@ pub enum Case {
 }
 
 impl Case {
-    pub fn assign(&self,one:TypeVar, two:TypeVar) -> Case {
+    pub fn assign(&self, one: TypeVar, two: TypeVar) -> Case {
         match self {
             Case::MoreEq(_, _) => Case::MoreEq(one, two),
             Case::EqEq(_, _) => Case::EqEq(one, two),
             Case::More(_, _) => Case::More(one, two),
             Case::LessEq(_, _) => Case::LessEq(one, two),
             Case::Less(_, _) => Case::Less(one, two),
-            Case::None => Case::None
+            Case::None => Case::None,
         }
     }
     pub fn from_op(value: Operators) -> Result<Case, ErrorBuilder> {
@@ -190,9 +189,9 @@ pub struct Logic {
 }
 
 impl Logic {
-    pub fn new(case:Case,else_: Option<Box<Ast>>, do_: Ast) -> Logic {
+    pub fn new(case: Case, else_: Option<Box<Ast>>, do_: Ast) -> Logic {
         return Logic {
-            if_:case,
+            if_: case,
             do_: Box::from(do_),
             else_,
         };

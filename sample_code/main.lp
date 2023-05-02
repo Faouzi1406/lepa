@@ -3,13 +3,13 @@ use "other.lp";
 let var = 20;
 
 fn wow() {
-	printf("Goodbye world! \n"); 
+	printf("Isn't this so strange...! number: %d", var); 
+	lol();
 	return;
 }
 
 fn main() {
 	let other = 2;
-	printf("Whut?! \n"); 
         wow();
 	return;
 }

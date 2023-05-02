@@ -52,20 +52,15 @@ impl<'ctx> Std for CodeGen<'ctx> {
             LOGGER.error(&"Printf expected a value but got none.");
             return;
         };
+
         match &first_arg.type_ {
             TypesArg::String => {
                 let printf = &self.module.get_function("printf");
-                let rand_name: f64 = rand::random();
-                println!("random: {rand_name}");
-
-                let value = self
-                    .builder
-                    .build_global_string_ptr(&first_arg.value, &format!("print_str{rand_name}",));
 
                 if printf.is_some() {
                     let _ = &self.builder.build_call(
                         printf.unwrap(),
-                        &[value.as_pointer_value().into()],
+                        &args_values,
                         "printf_call",
                     );
                     return;
@@ -84,9 +79,10 @@ impl<'ctx> Std for CodeGen<'ctx> {
                     .module
                     .add_function("printf", *print_f, Some(Linkage::External));
 
+
                 let _ = &self.builder.build_call(
                     *printf,
-                    &[value.as_pointer_value().into()],
+                    &args_values,
                     "printf_call",
                 );
             }

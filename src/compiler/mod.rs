@@ -1,10 +1,14 @@
 pub mod compile_function_call;
 pub mod return_compiler;
-pub mod var_compiler;
 pub mod std_compiler;
+pub mod var_compiler;
 
 use crate::ast::function::Func;
-use std::process::exit;
+use std::{
+    env::current_dir,
+    os::unix::process::CommandExt,
+    process::{exit, Command},
+};
 
 use inkwell::{
     basic_block::BasicBlock, builder::Builder, context::Context, module::Module,
@@ -29,6 +33,7 @@ pub struct CodeGen<'ctx> {
 pub trait Compile {
     ///  Takes the ast and returns the llvm ir string
     fn compile(&self) -> String;
+    fn create_binary(file_name: &str);
 }
 
 impl Compile for Ast {
@@ -51,8 +56,46 @@ impl Compile for Ast {
 
         code_gen.module.to_string()
     }
-}
+    fn create_binary(file_name: &str) {
+        let mut llvm = Command::new("llvm-as");
+        llvm.arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name);
 
+        let run_llvm = llvm.spawn();
+        match run_llvm {
+            Ok(value) => {
+                let mut clang = Command::new("clang");
+                clang.arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name + ".bc");
+                clang
+                    .arg("-o")
+                    .arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name);
+
+                let run_clang = clang.output();
+                match run_clang {
+                    Ok(_) => {
+                        LOGGER.info(&format!(
+                            "Compiled to: {}",
+                            current_dir().unwrap().to_str().unwrap().to_string() + &file_name
+                        ));
+                    }
+                    Err(value) => {
+                        LOGGER.error(&format!(
+                            "Couldn't compile to: {}; error {:?}",
+                            current_dir().unwrap().to_str().unwrap().to_string() + &file_name,
+                            value
+                        ));
+                    }
+                }
+            }
+            Err(value) => {
+                LOGGER.error(&format!(
+                    "Couldn't compile to: {}; error {:?}",
+                    current_dir().unwrap().to_str().unwrap().to_string() + &file_name,
+                    value
+                ));
+            }
+        }
+    }
+}
 trait Gen {
     fn compile_gen(&self, ast: Ast);
     fn gen_var(&self, var: &Variable);

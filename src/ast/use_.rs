@@ -1,11 +1,15 @@
-use std::{fs, path::PathBuf};
+use std::{env::current_dir, fs, path::PathBuf, process::Command};
 
 use crate::{
-    errors::error::{BuildError, ErrorBuilder},
+    compiler::{Compile, LOGGER},
+    errors::{
+        error::{BuildError, ErrorBuilder},
+        logger::Log,
+    },
     parser_lexer::{
         lexer::lexer::{Lexer, Token},
         parser::{Parse, Parser},
-    }, compiler::Compile,
+    },
 };
 
 use super::ast::{Ast, Type};
@@ -17,14 +21,18 @@ pub struct Use(String);
 #[derive(Clone, Debug, PartialEq)]
 pub struct Used(Vec<Use>);
 
+#[derive(Clone, Debug, PartialEq)]
 pub struct UsedCompiled {
     pub file_name: String,
-    pub contents: String,
+    pub contents: Vec<Token>,
 }
 
 impl UsedCompiled {
-    fn new(file_name:String, contents:String) -> UsedCompiled {
-        UsedCompiled { file_name, contents }
+    fn new(file_name: String, contents: Vec<Token>) -> UsedCompiled {
+        UsedCompiled {
+            file_name,
+            contents,
+        }
     }
 }
 
@@ -94,9 +102,7 @@ impl CompileUses for Used {
         for file in &self.0 {
             let string = fs::read_to_string(&file.0).unwrap();
             let lexed = Token::lex(string);
-            let parse = Parser::new(lexed).parse().unwrap();
-            let compile = parse.compile();
-            compile_used.push(UsedCompiled::new(file.0.clone(), compile));
+            compile_used.push(UsedCompiled::new(file.0.clone(), lexed));
         }
         return Ok(compile_used);
     }

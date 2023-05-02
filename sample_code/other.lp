@@ -1,6 +1,4 @@
-let var = 20;
-
-fn wow() {
-	printf("Goodbye world! \n"); 
+fn lol() {
+	printf("lol");
 	return;
 }

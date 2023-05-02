@@ -11,10 +11,16 @@ pub fn compile_function_call(code: &CodeGen, function: &Func) -> Result<(), Stri
     for arg in vars {
         match arg.type_ {
             TypesArg::None => {
-                LOGGER.error(&format!(
-                    "Found a invalid function argument, {} doesn't have a type.",
-                    arg.value
-                ));
+                let get_var = code.module.get_global(&arg.value);
+                match get_var {
+                    Some(value) => {
+                        let value  = value.as_pointer_value();
+                        args.push(value.into());
+                    }
+                    None => {
+                        LOGGER.error(&format!("Couldn't find variable {} in local scope or global scope.", &arg.value))
+                    }
+                }
             }
             TypesArg::Number => {
                 let value = code.context.i32_type();
@@ -22,9 +28,11 @@ pub fn compile_function_call(code: &CodeGen, function: &Func) -> Result<(), Stri
                 args.push(int.into());
             }
             TypesArg::String => {
-                let bytes = &arg.value;
-                let value = code.context.const_string(bytes.as_bytes(), false);
-                args.push(value.into());
+                let rand_name: f64 = rand::random();
+                let value = code
+                    .builder
+                    .build_global_string_ptr(&arg.value, &format!("str_argument{rand_name}",));
+                args.push(value.as_pointer_value().into());
             }
         }
     }

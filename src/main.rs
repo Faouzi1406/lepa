@@ -1,7 +1,10 @@
-use std::{io::Write, fs};
+use std::{fs, io::Write};
 
 use lepa::{
-    ast::use_::{GetUses, Use, CompileUses},
+    ast::{
+        ast::Ast,
+        use_::{CompileUses, GetUses, Use},
+    },
     compiler::Compile,
     logme,
     parser_lexer::lexer::lexer::{Lexer, Token},
@@ -10,17 +13,18 @@ use lepa::{
 
 fn main() {
     let files = fs::read_to_string("./main.lp");
-    let lexer = Token::lex(files.unwrap());
-    let parse = Parser::new(lexer).parse().unwrap();
-
+    let mut lexer = Token::lex(files.unwrap());
+    let parse = Parser::new(lexer.clone()).parse().unwrap();
     let uses = Use::get_use(parse.clone()).unwrap();
     let compile_uses = uses.compile().unwrap();
 
-    for compile in compile_uses {
-        let mut file = fs::File::create("./target/".to_string()  + &compile.file_name).unwrap();
-        file.write_all(compile.contents.as_bytes()).expect("write");
+    let mut tokens_now = Vec::new();
+    for mut tokens in compile_uses {
+        tokens_now.append(&mut tokens.contents);
     }
+    tokens_now.append(&mut lexer);
 
+    let parse = Parser::new(tokens_now).parse().unwrap();
     let compile = parse.compile();
     let main_file = std::fs::File::create("./target/main");
 
@@ -35,4 +39,6 @@ fn main() {
             logme!("error", val);
         }
     }
+
+    Ast::create_binary("/target/main");
 }

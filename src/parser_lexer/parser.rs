@@ -510,7 +510,6 @@ impl ParseTokens for Parser {
                     match keyword {
                         KeyWords::Number => {
                             let ass_type = current_arg.assign_type(TypesArg::Number);
-                            // Todo: Add better error for this case
                             if ass_type.is_err() {
                                 return Err(invalid_var_syntax_token(token));
                             }
@@ -528,8 +527,7 @@ impl ParseTokens for Parser {
                 TokenType::Identifier => {
                     let val = current_arg.assign_value(token.value.clone());
                     if current_arg.type_ == TypesArg::None {
-                        // Todo: Add better error for this case
-                        return Err(invalid_var_syntax_token(token));
+                        let _ = current_arg.assign_type(TypesArg::None);
                     }
                     if val.is_err() {
                         // Todo: Add better error for this case
@@ -687,13 +685,15 @@ impl ParseTokens for Parser {
             None => return Err(invalid_function_call(prev.value, prev.line)),
         }
 
+
         let func = Ast::new(Type::FunctionCall(Func {
             name: prev.value.clone(),
             args: self.parse_args()?,
             body: None,
             return_type: ReturnTypes::None,
         }));
-        let Some(close) =self.next() else {
+
+        let Some(close) = self.next() else {
             return Err(non_ending_variable(prev.value, prev.line));
         };
 
