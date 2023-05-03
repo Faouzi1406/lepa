@@ -34,7 +34,7 @@ Today was just me working on setting up llvm and making a start with compiling t
 - [x] Compiler support return
 - [x] Compiler creating local variables
 
-# When 30-04-2023
+# When 02-05-2023
 
 - [x] Support for calling functions from variables 
 

@@ -4,6 +4,7 @@ pub mod return_compiler;
 pub mod std_compiler;
 pub mod validation;
 pub mod var_compiler;
+pub mod compile_logic_cases;
 
 use crate::ast::function::Func;
 use std::{
@@ -25,7 +26,7 @@ use crate::{
     errors::logger::{Log, Logger},
 };
 
-use self::compile_function_call::compile_function_call;
+use self::{compile_function_call::compile_function_call, compile_logic_cases::compile_logic_case};
 
 pub struct CodeGen<'ctx> {
     pub context: &'ctx Context,
@@ -216,17 +217,23 @@ impl<'ctx> Gen for CodeGen<'ctx> {
                     }
                 }
                 Type::Variable(var) => {
-                    var_compiler::compile_var_func(&self, var.clone());
+                    var_compiler::compile_var_func(&self, var.clone(), func);
                 }
                 Type::Function(func) => {
                     let _ = &self.gen_func(func);
                     let _ = &self.builder.position_at_end(*block);
                 }
+                Type::Logic(case) => {
+                    let logic_case = compile_logic_case(&self, function, case, block, func);
+                    if logic_case.is_err() {
+                        LOGGER.error(&logic_case.err().unwrap());
+                        exit(0x0100)
+                    }
+                }
                 Type::FunctionCall(call) => {
-                    let _call = compile_function_call(&self, call);
+                    let _call = compile_function_call(&self, call, func);
                 }
                 type_ => {
-                    println!("huh? {:#?}", type_);
                     LOGGER.error(&format!(
                         "This token type is not yet supported for function bodies: {:#?}",
                         type_

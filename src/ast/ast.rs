@@ -6,11 +6,8 @@ use crate::{
     parser_lexer::lexer::lexer::Operators,
 };
 
-use super::{
-    function::Func,
-    use_::Use,
-    variable::{TypeVar, Variable},
-};
+use super::{function::Func, use_::Use, variable::{TypeVar, Variable}};
+
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypesArg {
@@ -53,6 +50,8 @@ impl Arg {
         self.type_ = TypesArg::None;
     }
 }
+
+
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum ReturnTypes {
@@ -135,7 +134,7 @@ pub enum Type {
     Block,
     Return(Return),
     Use(Use),
-    Logic(Logic),
+    Logic(Logic)
 }
 
 #[derive(Debug, PartialEq, Clone)]

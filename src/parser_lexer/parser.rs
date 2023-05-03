@@ -768,9 +768,9 @@ impl ParseTokens for Parser {
         let block = self.next().unwrap();
         match block.token_type {
             TokenType::OpenCurlyBracket => {
-                let body = &self.parse_block()?;
+                let do_ = &self.parse_block()?;
                 let Some(check_else) = self.next() else {
-                    return Ok(Logic::new(case,None, body.clone()));
+                    return Ok(Logic::new(case,None, do_.clone()));
                 };
                 match check_else.token_type {
                     TokenType::Keyword(KeyWords::Else) => match self.next() {
@@ -780,7 +780,7 @@ impl ParseTokens for Parser {
                                 return Ok(Logic::new(
                                     case,
                                     Some(Box::from(body.clone())),
-                                    body.clone(),
+                                    do_.clone(),
                                 ));
                             }
                             _ => return Err(invalid_if_statement_body(prev.line)),
@@ -789,7 +789,7 @@ impl ParseTokens for Parser {
                     },
                     _ => {
                         self.advance_back(1);
-                        return Ok(Logic::new(case, None, body.clone()));
+                        return Ok(Logic::new(case, None, do_.clone()));
                     }
                 }
             }

@@ -1,13 +1,13 @@
-use super::{CodeGen, LOGGER};
-use crate::{
-    ast::{ast::TypesArg, function::Func},
-    errors::logger::Log,
-};
-use inkwell::values::BasicMetadataValueEnum;
+use std::process::exit;
+
+use super::CodeGen;
+use crate::ast::{ast::TypesArg, function::Func};
+use inkwell::values::{BasicMetadataValueEnum, FunctionValue};
 
 pub fn get_args_value<'ctx>(
     code: &CodeGen<'ctx>,
     function: &Func,
+    func: &FunctionValue,
 ) -> Vec<BasicMetadataValueEnum<'ctx>> {
     let vars = &function.args;
     let mut args = Vec::new();
@@ -29,13 +29,16 @@ pub fn get_args_value<'ctx>(
                                     _ => (),
                                 }
                             }
-                            None => {}
+                            None => {
+                            }
                         }
                     }
-                    None => LOGGER.error(&format!(
-                        "Couldn't find variable {} in local scope or global scope.",
-                        &arg.value
-                    )),
+                    None => {
+                        println!("huh");
+                        let params = func.get_params();
+                        println!("huh {:#?}", params);
+                        exit(1);
+                    }
                 }
             }
             TypesArg::Number => {
