@@ -1,8 +1,8 @@
 use crate::errors::error::BuildError;
 use crate::errors::error::ErrorBuilder;
 
+use super::ast::TypesArg;
 use super::function::Func;
-
 
 #[derive(Debug, PartialEq, Clone)]
 pub enum TypeVar {
@@ -11,7 +11,7 @@ pub enum TypeVar {
     String(String),
     Identifier(String),
     FunctionCall(Func),
-    None
+    None,
 }
 
 impl TypeVar {
@@ -21,6 +21,33 @@ impl TypeVar {
     pub fn parse_number(num: String) -> Self {
         let num = num.parse().unwrap();
         Self::Number(num)
+    }
+    pub fn uses(&self, uses: &str) -> bool {
+        match &self {
+            TypeVar::Identifier(value) if *value == uses => {
+                return true;
+            }
+            TypeVar::Arr { values } => {
+                for value in values {
+                    let false = value.uses(uses) else {
+                        return true;
+                    };
+                }
+                return false;
+            }
+            TypeVar::FunctionCall(func) => {
+                let args = &func.args;
+                for arg in args {
+                    if arg.type_ == TypesArg::None {
+                        if arg.value == uses {
+                            return true;
+                        }
+                    }
+                }
+                return false;
+            }
+            _ => false,
+        }
     }
 }
 

@@ -58,9 +58,11 @@ impl<'ctx> Std for CodeGen<'ctx> {
                 let printf = &self.module.get_function("printf");
 
                 if printf.is_some() {
-                    let _ = &self
-                        .builder
-                        .build_call(printf.unwrap(), &args_values.clone(), "printf_call");
+                    let _ = &self.builder.build_call(
+                        printf.unwrap(),
+                        &args_values.clone(),
+                        "printf_call",
+                    );
                     return;
                 }
 

@@ -6,8 +6,11 @@ use crate::{
     parser_lexer::lexer::lexer::Operators,
 };
 
-use super::{function::Func, use_::Use, variable::{TypeVar, Variable}};
-
+use super::{
+    function::Func,
+    use_::Use,
+    variable::{TypeVar, Variable},
+};
 
 #[derive(Debug, Clone, PartialEq)]
 pub enum TypesArg {
@@ -51,8 +54,6 @@ impl Arg {
     }
 }
 
-
-
 #[derive(Debug, PartialEq, Clone)]
 pub enum ReturnTypes {
     Number,
@@ -65,6 +66,7 @@ pub enum ReturnTypes {
 pub struct Return {
     pub value: String,
     pub type_: ReturnTypes,
+    pub line: usize,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -134,7 +136,7 @@ pub enum Type {
     Block,
     Return(Return),
     Use(Use),
-    Logic(Logic)
+    Logic(Logic),
 }
 
 #[derive(Debug, PartialEq, Clone)]

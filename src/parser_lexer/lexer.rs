@@ -40,7 +40,7 @@ pub mod lexer {
         Number,
         String,
         Use,
-        Const
+        Const,
     }
 
     /// All the operators

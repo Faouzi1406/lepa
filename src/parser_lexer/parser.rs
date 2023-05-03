@@ -648,6 +648,7 @@ impl ParseTokens for Parser {
             args,
             body,
             return_type,
+            line: prev.line,
         }));
         return Ok(ast);
     }
@@ -713,6 +714,7 @@ impl ParseTokens for Parser {
             args: self.parse_args()?,
             body: None,
             return_type: ReturnTypes::None,
+            line: prev.line,
         };
 
         let Some(close) = self.next() else {
@@ -736,24 +738,28 @@ impl ParseTokens for Parser {
                     return Ok(Return {
                         value: token.value.clone(),
                         type_: ReturnTypes::Number,
+                        line: token.line,
                     });
                 }
                 TokenType::String => {
                     return Ok(Return {
                         value: token.value.clone(),
                         type_: ReturnTypes::String,
+                        line: token.line,
                     });
                 }
                 TokenType::Identifier => {
                     return Ok(Return {
                         value: token.value.clone(),
                         type_: ReturnTypes::Identifier,
+                        line: token.line,
                     });
                 }
                 TokenType::SemiColon => {
                     return Ok(Return {
                         value: "void".to_string(),
                         type_: ReturnTypes::None,
+                        line: token.line,
                     });
                 }
                 _ => todo!("This is currently not supported yet, might get added in the future..."),

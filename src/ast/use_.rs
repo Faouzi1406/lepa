@@ -1,15 +1,8 @@
-use std::{env::current_dir, fs, path::PathBuf, process::Command};
+use std::{fs, path::PathBuf};
 
 use crate::{
-    compiler::{Compile, LOGGER},
-    errors::{
-        error::{BuildError, ErrorBuilder},
-        logger::Log,
-    },
-    parser_lexer::{
-        lexer::lexer::{Lexer, Token},
-        parser::{Parse, Parser},
-    },
+    errors::error::{BuildError, ErrorBuilder},
+    parser_lexer::lexer::lexer::{Lexer, Token},
 };
 
 use super::ast::{Ast, Type};

@@ -1,11 +1,14 @@
 use crate::ast::ast::{Arg, Ast, ReturnTypes};
 
+use super::ast::TypesArg;
+
 #[derive(Debug, PartialEq, Clone)]
 pub struct Func {
     pub name: String,
     pub args: Vec<Arg>,
     pub body: Option<Box<Ast>>,
     pub return_type: ReturnTypes,
+    pub line: usize,
 }
 
 impl Func {
@@ -16,5 +19,17 @@ impl Func {
             }
         }
         return None;
+    }
+
+    /// Checks if args uses a certaint value only works for identifiers
+    pub fn args_uses(&self, value: &str) -> bool {
+        for arg in &self.args {
+            if arg.type_ == TypesArg::None {
+                if arg.value == value {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 }

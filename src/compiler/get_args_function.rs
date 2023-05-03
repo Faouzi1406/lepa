@@ -29,8 +29,7 @@ pub fn get_args_value<'ctx>(
                                     _ => (),
                                 }
                             }
-                            None => {
-                            }
+                            None => {}
                         }
                     }
                     None => {

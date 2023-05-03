@@ -37,13 +37,13 @@ pub fn compile_logic_case(
     return Ok(());
 }
 
-pub fn compare_nums(num_1:i32, num_2:i32,case:&str) -> bool {
+pub fn compare_nums(num_1: i32, num_2: i32, case: &str) -> bool {
     match case {
         "more" => return num_1 > num_2,
         "less" => return num_1 < num_2,
         "more_eq" => return num_1 >= num_2,
         "less_eq" => return num_1 <= num_2,
-        _ => false
+        _ => false,
     }
 }
 
@@ -53,7 +53,7 @@ pub fn compile_compare_nums(
     logic: &Logic,
     block: &BasicBlock,
     func: &FunctionValue,
-    case:&str,
+    case: &str,
     (val1, val2): (&TypeVar, &TypeVar),
 ) -> Result<(), String> {
     match (val1, val2) {
@@ -94,7 +94,12 @@ pub fn compile_compare_nums(
                 }
             }
         }
-        case => return Err(format!("Cannot check if {:#?} is more then {:#?}", case.0, case.1)),
+        case => {
+            return Err(format!(
+                "Cannot check if {:#?} is more then {:#?}",
+                case.0, case.1
+            ))
+        }
     }
     return Ok(());
 }

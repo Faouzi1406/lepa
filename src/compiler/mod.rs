@@ -1,10 +1,10 @@
 pub mod compile_function_call;
+pub mod compile_logic_cases;
 pub mod get_args_function;
 pub mod return_compiler;
 pub mod std_compiler;
 pub mod validation;
 pub mod var_compiler;
-pub mod compile_logic_cases;
 
 use crate::ast::function::Func;
 use std::{
@@ -233,12 +233,10 @@ impl<'ctx> Gen for CodeGen<'ctx> {
                 Type::FunctionCall(call) => {
                     let _call = compile_function_call(&self, call, func);
                 }
-                type_ => {
-                    LOGGER.error(&format!(
-                        "This token type is not yet supported for function bodies: {:#?}",
-                        type_
-                    ))
-                }
+                type_ => LOGGER.error(&format!(
+                    "This token type is not yet supported for function bodies: {:#?}",
+                    type_
+                )),
             }
         }
     }
