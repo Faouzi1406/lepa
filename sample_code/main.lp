@@ -3,7 +3,7 @@ use "other.lp";
 const var = 20;
 
 fn wow() number {
-	if  10 > 1 {
+	if  10 >= 10 {
 		 lol();
 	}
 	else {
