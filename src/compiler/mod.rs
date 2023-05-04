@@ -101,7 +101,7 @@ impl Compile for Ast {
         }
     }
 }
-trait Gen {
+trait Gen<'ctx> {
     fn compile_gen(&self, ast: Ast);
     fn gen_var(&self, var: &Variable);
     fn gen_func(&self, function: &Func);
@@ -109,12 +109,12 @@ trait Gen {
         &self,
         function: &Func,
         ast: Vec<Ast>,
-        func: &FunctionValue,
+        func: &FunctionValue<'ctx>,
         block: &BasicBlock,
     );
 }
 
-impl<'ctx> Gen for CodeGen<'ctx> {
+impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
     fn compile_gen(&self, ast: Ast) {
         for node in ast.body {
             match node.type_ {
@@ -128,7 +128,7 @@ impl<'ctx> Gen for CodeGen<'ctx> {
                 crate::ast::ast::Type::Function(func) => {
                     let _ = &self.gen_func(&func);
                 }
-                _ => (),
+                _ => ()
             };
         }
     }
@@ -203,7 +203,7 @@ impl<'ctx> Gen for CodeGen<'ctx> {
         &self,
         function: &Func,
         ast: Vec<Ast>,
-        func: &FunctionValue,
+        func: &FunctionValue<'ctx>,
         block: &BasicBlock,
     ) {
         for token in &ast {

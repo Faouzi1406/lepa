@@ -1,14 +1,21 @@
 use std::process::exit;
 
-use super::CodeGen;
-use crate::ast::{ast::TypesArg, function::Func};
-use inkwell::values::{BasicMetadataValueEnum, FunctionValue};
+use super::{CodeGen, LOGGER};
+use crate::{
+    ast::{ast::TypesArg, function::Func},
+    errors::logger::Log,
+};
+use inkwell::{
+    types::BasicTypeEnum,
+    values::{BasicMetadataValueEnum, FunctionValue},
+};
 
 pub fn get_args_value<'ctx>(
     code: &CodeGen<'ctx>,
     function: &Func,
-    func: &FunctionValue,
+    func: &FunctionValue<'ctx>,
 ) -> Vec<BasicMetadataValueEnum<'ctx>> {
+    let func_ = function.clone();
     let vars = &function.args;
     let mut args = Vec::new();
 
@@ -33,10 +40,30 @@ pub fn get_args_value<'ctx>(
                         }
                     }
                     None => {
-                        println!("huh");
-                        let params = func.get_params();
-                        println!("huh {:#?}", params);
-                        exit(1);
+                        let blocks = func.get_basic_blocks();
+                        for block in blocks {
+                        }
+                        // Check if it's and param if yes pass as arguments
+                        let arg_i = func_.get_arg_index_(&arg.value);
+                        if arg_i.is_some() {
+                            let arg_i = arg_i.unwrap();
+                            let params = func.get_nth_param(arg_i - 1);
+                            if params.is_some() {
+                                let param = params.unwrap();
+                                let type_ = param.get_type();
+                                match type_ {
+                                    BasicTypeEnum::IntType(_) => {
+                                        let param = param.into_int_value();
+                                        args.push(param.into());
+                                    }
+                                    _ => {}
+                                }
+                            } else {
+                                // Should technicly never happen
+                                LOGGER.error(&"Something went wrong getting the argument of the function at known index.");
+                                exit(1);
+                            }
+                        }
                     }
                 }
             }

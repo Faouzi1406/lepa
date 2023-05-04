@@ -12,6 +12,14 @@ pub struct Func {
 }
 
 impl Func {
+    pub fn remove_arg_at_index(&mut self, i:usize) -> Option<Arg> {
+        if self.args.len() < i {
+            return None;
+        }
+        let arg = self.args.remove(i);
+        return Some(arg);
+    }
+
     pub fn get_arg_index_(&self, value: &str) -> Option<u32> {
         for (i, arg) in self.args.iter().enumerate() {
             if arg.value == value {

@@ -6,7 +6,7 @@ use crate::{ast::variable::TypeVar, compiler::Variable, errors::logger::Log};
 
 use super::{get_args_function::get_args_value, validation::compare_args, CodeGen, LOGGER};
 
-pub fn compile_var_func(code: &CodeGen, variable: Variable, func: &FunctionValue) {
+pub fn compile_var_func<'ctx>(code: &CodeGen<'ctx>, variable: Variable, func: &FunctionValue<'ctx>) {
     match variable.type_ {
         TypeVar::Number(num) => {
             let i32_type = code.context.i32_type();
@@ -31,7 +31,7 @@ pub fn compile_var_func(code: &CodeGen, variable: Variable, func: &FunctionValue
                 exit(1);
             }
             let call_fn = call_fn.unwrap();
-            let fn_args = get_args_value(code, &call, func);
+            let fn_args = get_args_value(code, &call, func).to_owned();
             let args_fn = call_fn.get_params();
             let compare_args = compare_args(args_fn, fn_args.clone());
             if !compare_args {

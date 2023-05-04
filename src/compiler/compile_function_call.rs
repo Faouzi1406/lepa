@@ -3,10 +3,10 @@ use inkwell::values::FunctionValue;
 use super::{get_args_function::get_args_value, std_compiler::Std, CodeGen, LOGGER};
 use crate::{ast::function::Func, errors::logger::Log};
 
-pub fn compile_function_call(
-    code: &CodeGen,
+pub fn compile_function_call<'ctx>(
+    code: &CodeGen<'ctx>,
     function: &Func,
-    func: &FunctionValue,
+    func: &FunctionValue<'ctx>,
 ) -> Result<(), String> {
     let args = get_args_value(code, function, func);
 
