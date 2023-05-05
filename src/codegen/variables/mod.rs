@@ -6,7 +6,7 @@ use crate::ast::variable::{TypeVar, Variable};
 use super::{get_args_function::Args, validation::compare_args, CodeGen, LOGGER};
 
 pub trait GenVar<'ctx> {
-    fn gen_variable(&self, function: &Func, variable: &Variable, func: &FunctionValue<'ctx>);
+    fn gen_variable(&self,  variable: &Variable, func: &FunctionValue<'ctx>);
 }
 
 trait Gen<'ctx> {
@@ -15,7 +15,6 @@ trait Gen<'ctx> {
     fn gen_call(
         &self,
         call: &Func,
-        function: &Func,
         func: &FunctionValue<'ctx>,
         variable: &Variable,
     );
@@ -37,10 +36,10 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
     fn gen_call(
         &self,
         call: &Func,
-        function: &Func,
         func: &FunctionValue<'ctx>,
         variable: &Variable,
     ) {
+        println!("hello");
         let call_fn = self.module.get_function(&call.name);
         if call_fn.is_none() {
             LOGGER.display_error(&format!(
@@ -49,7 +48,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
             ));
         }
         let call_fn = call_fn.unwrap();
-        let fn_args = CodeGen::get_args_value(&self, function, func);
+        let fn_args = CodeGen::get_args_value(&self, call, func);
         let args_fn = call_fn.get_params();
         let compare_args = compare_args(args_fn, fn_args.clone());
         if !compare_args {
@@ -64,7 +63,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
 }
 
 impl<'ctx> GenVar<'ctx> for CodeGen<'ctx> {
-    fn gen_variable(&self, function: &Func, variable: &Variable, func: &FunctionValue<'ctx>) {
+    fn gen_variable(&self,  variable: &Variable, func: &FunctionValue<'ctx>) {
         match &variable.type_ {
             TypeVar::Arr { .. } => {
                 //Todo: Not yet suported
@@ -74,7 +73,7 @@ impl<'ctx> GenVar<'ctx> for CodeGen<'ctx> {
             }
             TypeVar::String(value) => self.gen_string(&value, variable),
             TypeVar::Identifier(_) => {}
-            TypeVar::FunctionCall(call) => self.gen_call(call, function, func, variable),
+            TypeVar::FunctionCall(call) => self.gen_call(call,  func, variable),
             TypeVar::None => {}
         }
     }

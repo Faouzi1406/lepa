@@ -28,11 +28,14 @@ impl<'ctx> GenReturnTypes for CodeGen<'ctx> {
     }
     // Todo: Local variables
     fn gen_id(&self, return_type: Return, function: &Func, func: &FunctionValue) {
+        println!("{:#?}", function);
         let val = self.module.get_global(&return_type.value);
 
         if val.is_some() {
             let val = val.unwrap();
-            self.builder.build_return(Some(&val));
+            let val = val.as_pointer_value();
+            let load = &self.builder.build_load(val, &function.name);
+            self.builder.build_return(Some(load));
         }
 
         let param_ = function.get_arg_index_(&return_type.value);

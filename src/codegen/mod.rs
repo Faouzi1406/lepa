@@ -7,10 +7,7 @@ pub mod validation;
 pub mod variables;
 
 use crate::ast::function::Func;
-use std::{
-    env::current_dir,
-    process::{exit, Command},
-};
+use std::{env::current_dir, process::Command};
 
 use colored::Colorize;
 use inkwell::{
@@ -26,10 +23,7 @@ use crate::{
     errors::logger::{Log, Logger},
 };
 
-use self::{
-    gen_logic_case::GenLogicCase,
-    return_compiler::GenReturn, variables::GenVar,
-};
+use self::{gen_logic_case::GenLogicCase, return_compiler::GenReturn, variables::GenVar};
 
 use function_calls::gen_function_call::GenFunctionCall;
 
@@ -217,11 +211,10 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
                     let ret = self.gen_return(ret.clone(), function, func);
                     if ret.is_err() {
                         LOGGER.error(&ret.err().unwrap());
-                        exit(0x0100)
                     }
                 }
                 Type::Variable(var) => {
-                    let _ = &self.gen_variable(function, &var, func);
+                    let _ = &self.gen_variable(&var, func);
                 }
                 Type::Function(func) => {
                     let _ = &self.gen_func(func);

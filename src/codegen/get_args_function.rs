@@ -59,11 +59,14 @@ impl<'ctx> Args<'ctx> for CodeGen<'ctx> {
                             if value.is_some() {
                                 let value = value.unwrap().as_any_value_enum();
                                 match value {
+                                    AnyValueEnum::IntValue(val) => {
+                                        args.push(val.into());
+                                    }
                                     AnyValueEnum::PointerValue(val) => {
                                         let load  = self.builder.build_load(val, &arg.value);
                                         args.push(load.into());
                                     }
-                                    _ => ()
+                                    val => println!("I am... {val:#?}")
                                 }
                                 continue;
                             }
