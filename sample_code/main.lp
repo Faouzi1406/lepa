@@ -3,13 +3,12 @@ use "other.lp";
 const var = 20;
 
 fn wowie(number num, number some) {
-	printf("wowie. num: %d : some: %d", num, some); 
+	printf("wowie. wow is : %d : var is : %d", num, some); 
 	return;
 }
 
 fn main() {
-	printf("hello");
-	wowie(200, 300);
-	lol(100);
+	let wow = 10;
+	wowie(wow, var);
 	return;
 }

@@ -7,34 +7,46 @@ use crate::ast::{
     variable::TypeVar,
 };
 
-// Todo: Add support for comparing variables && function calls
-// I need to add both support for it in the parser and the compiler
-pub fn compile_logic_case<'ctx>(
-    code: &CodeGen<'ctx>,
-    function: &Func,
-    logic: &Logic,
-    block: &BasicBlock,
-    func: &FunctionValue<'ctx>,
-) -> Result<(), String> {
+pub trait GenLogicCase<'ctx> {
+    // Todo: Add support for comparing variables && function calls
+    // I need to add both support for it in the parser and the compiler
+    fn gen_logic_case(
+        &self,
+        function: &Func,
+        logic: &Logic,
+        block: &BasicBlock,
+        func: &FunctionValue<'ctx>,
+    ) -> Result<(), String>;
+}
+
+impl<'ctx> GenLogicCase<'ctx> for CodeGen<'ctx> {
+    fn gen_logic_case(
+        &self,
+        function: &Func,
+        logic: &Logic,
+        block: &BasicBlock,
+        func: &FunctionValue<'ctx>,
+    ) -> Result<(), String> {
     match &logic.if_ {
         Case::None => {
             return Err("Found if without any comparisons!".into());
         }
-        Case::EqEq(val1, val2) => {}
+        Case::EqEq(_, _) => {}
         Case::More(val1, val2) => {
-            compile_compare_nums(code, function, logic, block, func, "more", (val1, val2))?;
+            compile_compare_nums(&self, function, logic, block, func, "more", (val1, val2))?;
         }
         Case::MoreEq(val1, val2) => {
-            compile_compare_nums(code, function, logic, block, func, "more_eq", (val1, val2))?;
+            compile_compare_nums(&self, function, logic, block, func, "more_eq", (val1, val2))?;
         }
         Case::Less(val1, val2) => {
-            compile_compare_nums(code, function, logic, block, func, "less", (val1, val2))?;
+            compile_compare_nums(&self, function, logic, block, func, "less", (val1, val2))?;
         }
         Case::LessEq(val1, val2) => {
-            compile_compare_nums(code, function, logic, block, func, "less_eq", (val1, val2))?;
+            compile_compare_nums(&self, function, logic, block, func, "less_eq", (val1, val2))?;
         }
     }
     return Ok(());
+}
 }
 
 pub fn compare_nums(num_1: i32, num_2: i32, case: &str) -> bool {

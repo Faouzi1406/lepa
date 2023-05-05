@@ -1,10 +1,10 @@
-pub mod compile_function_call;
-pub mod compile_logic_cases;
+pub mod function_calls;
+pub mod gen_logic_case;
 pub mod get_args_function;
 pub mod return_compiler;
 pub mod std_compiler;
 pub mod validation;
-pub mod var_compiler;
+pub mod variables;
 
 use crate::ast::function::Func;
 use std::{
@@ -26,7 +26,12 @@ use crate::{
     errors::logger::{Log, Logger},
 };
 
-use self::{compile_function_call::compile_function_call, compile_logic_cases::compile_logic_case};
+use self::{
+    gen_logic_case::GenLogicCase,
+    return_compiler::GenReturn, variables::GenVar,
+};
+
+use function_calls::gen_function_call::GenFunctionCall;
 
 pub struct CodeGen<'ctx> {
     pub context: &'ctx Context,
@@ -209,29 +214,27 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
         for token in &ast {
             match &token.type_ {
                 Type::Return(ret) => {
-                    let ret =
-                        return_compiler::return_type_build(&self, ret.clone(), function, func);
+                    let ret = self.gen_return(ret.clone(), function, func);
                     if ret.is_err() {
                         LOGGER.error(&ret.err().unwrap());
                         exit(0x0100)
                     }
                 }
                 Type::Variable(var) => {
-                    var_compiler::compile_var_func(&self, var.clone(), func);
+                    let _ = &self.gen_variable(function, &var, func);
                 }
                 Type::Function(func) => {
                     let _ = &self.gen_func(func);
                     let _ = &self.builder.position_at_end(*block);
                 }
                 Type::Logic(case) => {
-                    let logic_case = compile_logic_case(&self, function, case, block, func);
+                    let logic_case = self.gen_logic_case(function, case, block, func);
                     if logic_case.is_err() {
                         LOGGER.error(&logic_case.err().unwrap());
-                        exit(0x0100)
                     }
                 }
                 Type::FunctionCall(call) => {
-                    let _call = compile_function_call(&self, call, func);
+                    let _call = self.gen_function_call(call, func);
                 }
                 type_ => LOGGER.error(&format!(
                     "This token type is not yet supported for function bodies: {:#?}",

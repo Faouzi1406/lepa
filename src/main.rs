@@ -1,4 +1,6 @@
-use lepa::{ast::ast::Ast, compiler::Compile, lepa_analyzer::unused::Unused, logme};
+use inkwell::context::Context;
+use inkwell::AddressSpace;
+use lepa::{ast::ast::Ast, codegen::Compile, lepa_analyzer::unused::Unused, logme};
 use std::{fs, io::Write};
 
 use lepa::{
@@ -7,7 +9,7 @@ use lepa::{
     parser_lexer::parser::{Parse, Parser},
 };
 
-fn main() {
+fn compile() {
     let files = fs::read_to_string("./main.lp");
     let mut lexer = Token::lex(files.unwrap());
     let parse = Parser::new(lexer.clone()).parse().unwrap();
@@ -23,7 +25,6 @@ fn main() {
 
     let parse = Parser::new(tokens_now).parse().unwrap();
     let compile = parse.compile();
-    println!("{:#?}", compile);
     let main_file = std::fs::File::create("./target/main");
     match main_file {
         Ok(mut file) => {
@@ -38,4 +39,13 @@ fn main() {
     }
 
     Ast::create_binary("/target/main");
+}
+
+fn main() {
+    compile()
+    // assert!(some_number.is_some());
+    // assert_eq!(
+    //     some_number.unwrap().get_name().unwrap().to_str(),
+    //     Ok("some_number")
+    // )
 }
