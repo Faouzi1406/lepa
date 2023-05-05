@@ -2,13 +2,14 @@ use "other.lp";
 
 const var = 20;
 
-fn wowie(number num, number some) {
-	printf("wowie. wow is : %d : var is : %d", num, some); 
-	return;
+fn wowie(number lol) number {
+	printf("number: %d", lol);
+	return lol;
 }
 
 fn main() {
-	let wow = 10;
-	wowie(wow, var);
+	let yo = wowie(10);
+	printf("whut??? {%d}", yo);
+	main();
 	return;
 }

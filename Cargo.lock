@@ -86,6 +86,7 @@ dependencies = [
 [[package]]
 name = "inkwell"
 version = "0.1.1"
+source = "git+https://github.com/Faouzi1406/inkwell.git#4d02a89e880011bcff1f7f7ee9c6487a370b0d44"
 dependencies = [
  "either",
  "inkwell_internals",
@@ -98,6 +99,7 @@ dependencies = [
 [[package]]
 name = "inkwell_internals"
 version = "0.7.0"
+source = "git+https://github.com/Faouzi1406/inkwell.git#4d02a89e880011bcff1f7f7ee9c6487a370b0d44"
 dependencies = [
  "proc-macro2",
  "quote",

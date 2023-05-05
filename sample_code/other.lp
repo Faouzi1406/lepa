@@ -1,4 +1,3 @@
-fn lol(number lol) {
-	printf("lol? %d", lol);
-	return;
+fn other(number wow) number {
+return wow;
 }

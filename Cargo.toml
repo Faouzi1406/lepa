@@ -7,5 +7,5 @@ edition = "2021"
 
 [dependencies]
 colored = "2.0.0"
-inkwell = { path = "../inkwell",  features = ["llvm12-0"] }
+inkwell = { git = "https://github.com/Faouzi1406/inkwell.git", features = ["llvm12-0"] }
 rand = "0.8.5"
