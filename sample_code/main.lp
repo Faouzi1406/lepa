@@ -9,7 +9,14 @@ fn wowie(number lol) number {
 
 fn main() {
 	let yo = wowie(10);
-	printf("whut??? {%d}", yo);
-	main();
+
+	if lol == lol || other == other && 1 == 1 {
+		printf("yep");
+	}
+	else {
+		printf("nope");
+	}
+
+	printf("whut??? {%d}", 10);
 	return;
 }
