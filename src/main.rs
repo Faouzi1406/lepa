@@ -1,5 +1,3 @@
-use inkwell::context::Context;
-use inkwell::AddressSpace;
 use lepa::{ast::ast::Ast, codegen::Compile, lepa_analyzer::unused::Unused, logme};
 use std::{fs, io::Write};
 
@@ -42,7 +40,11 @@ fn compile() {
 }
 
 fn main() {
-    compile()
+    //compile()
+    let files = fs::read_to_string("./main.lp");
+    let mut lexer = Token::lex(files.unwrap());
+    let parse = Parser::new(lexer.clone()).parse().unwrap();
+    println!("{:#?}", parse);
     // assert!(some_number.is_some());
     // assert_eq!(
     //     some_number.unwrap().get_name().unwrap().to_str(),

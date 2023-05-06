@@ -163,14 +163,15 @@ pub trait WalkParser {
 }
 
 pub trait CaseLogic {
-    fn get_case(&mut self) -> Result<Case, ErrorBuilder>;
+    fn get_case(&mut self) -> Result<Vec<Case>, ErrorBuilder>;
 }
 
 impl CaseLogic for Parser {
-    fn get_case(&mut self) -> Result<Case, ErrorBuilder> {
+    fn get_case(&mut self) -> Result<Vec<Case>, ErrorBuilder> {
         let mut type_var_1 = TypeVar::None;
         let mut type_var_2 = TypeVar::None;
-        let mut case = Case::None;
+        let mut current_case = Case::None;
+        let mut case = vec![];
 
         let val_1 = self.next().unwrap();
         match val_1.token_type {
@@ -179,6 +180,9 @@ impl CaseLogic for Parser {
             }
             TokenType::Identifier => {
                 type_var_1 =  TypeVar::Identifier(val_1.value);
+            }
+            TokenType::String => {
+                type_var_1 =  TypeVar::String(val_1.value);
             }
             _ => return Err(ErrorBuilder::new()
                 .message("The first value of this if statement is either not supported yet or incorrect.")
@@ -190,7 +194,7 @@ impl CaseLogic for Parser {
         let case_token = self.next().unwrap();
         match case_token.token_type {
             TokenType::Operator(op) => {
-                case = Case::from_op(op)?;
+                current_case = Case::from_op(op)?;
             }
             _ => {
                 return Err(ErrorBuilder::new()
@@ -209,6 +213,9 @@ impl CaseLogic for Parser {
             TokenType::Identifier => {
                 type_var_2 =  TypeVar::Identifier(val_2.value);
             }
+            TokenType::String => {
+                type_var_2 =  TypeVar::String(val_2.value);
+            }
             _ => return Err(ErrorBuilder::new()
                 .message("The first value of this if statement is either not supported yet or incorrect.")
                 .line(val_2.line)
@@ -216,8 +223,22 @@ impl CaseLogic for Parser {
                 .build_error()),
         };
 
-        let assign = case.assign(type_var_1, type_var_2);
-        Ok(assign)
+        match self.next() {
+            Some(val) => {
+                let val = val.token_type;
+                match val {
+                    TokenType::AndAnd | TokenType::OrOr => {
+                        case.append(&mut self.get_case()?);
+                    }
+                    _ => self.advance_back(1),
+                }
+            }
+            _ => self.advance_back(1),
+        }
+
+        let assign = current_case.assign(type_var_1, type_var_2);
+        case.push(assign);
+        Ok(case)
     }
 }
 
@@ -772,6 +793,7 @@ impl ParseTokens for Parser {
         let prev = self.prev_token.clone().unwrap();
         let case = self.get_case()?;
         let block = self.next().unwrap();
+
         match block.token_type {
             TokenType::OpenCurlyBracket => {
                 let do_ = &self.parse_block()?;

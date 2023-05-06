@@ -1,5 +1,3 @@
-use std::ops::Deref;
-
 use crate::ast::ast::Case;
 use crate::ast::ast::Type;
 use crate::ast::ast::TypesArg;
@@ -93,27 +91,27 @@ impl DetectorVars for DetectUnused {
                         let func = DetectUnused::new(token.clone());
                         if func.detect_used_in_block(&detected_var.var.name) {used = true; break;};
                     }
-                    Type::Logic(logic) => match &logic.if_ {
-                        Case::EqEq(val1, val2) => {
-                            let false = val1.uses(&detected_var.var.name) else {
-                                used = true; 
-                                break;
-                            };
-                            let false = val2.uses(&detected_var.var.name) else {
-                                used = true; 
-                                break;
-                            };
-
-                            let block = DetectUnused::new(*logic.do_.clone());
-                            if block.detect_used_in_block(&detected_var.var.name) {used = true; break;};
-
-                            if logic.else_.is_some() {
-                                let block = DetectUnused::new(*logic.else_.clone().unwrap());
-                                if block.detect_used_in_block(&detected_var.var.name) {used = true; break;};
-                            }
-                        }
-                        _ => (),
-                    },
+                    // Type::Logic(logic) => match &logic.if_ {
+                    //     Case::EqEq(val1, val2) => {
+                    //         let false = val1.uses(&detected_var.var.name) else {
+                    //             used = true; 
+                    //             break;
+                    //         };
+                    //         let false = val2.uses(&detected_var.var.name) else {
+                    //             used = true; 
+                    //             break;
+                    //         };
+                    //
+                    //         let block = DetectUnused::new(*logic.do_.clone());
+                    //         if block.detect_used_in_block(&detected_var.var.name) {used = true; break;};
+                    //
+                    //         if logic.else_.is_some() {
+                    //             let block = DetectUnused::new(*logic.else_.clone().unwrap());
+                    //             if block.detect_used_in_block(&detected_var.var.name) {used = true; break;};
+                    //         }
+                    //     }
+                    //     _ => (),
+                    // },
                     Type::FunctionCall(call) => {
                             if call.args_uses(&detected_var.var.name) {used = true; break};
                     }

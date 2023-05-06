@@ -51,7 +51,6 @@ impl<'ctx> Args<'ctx> for CodeGen<'ctx> {
                             }
                         }
                         None => {
-                            // Todo: check for value in instructions
                             let blocks = func.get_basic_blocks();
                             let block = blocks.first().unwrap();
 
@@ -65,8 +64,8 @@ impl<'ctx> Args<'ctx> for CodeGen<'ctx> {
                                     AnyValueEnum::PointerValue(val) => {
                                         let load  = self.builder.build_load(val, &arg.value);
                                         args.push(load.into());
-                                    }
-                                    val => println!("I am... {val:#?}")
+                                    },
+                                    val => ()
                                 }
                                 continue;
                             }

@@ -25,6 +25,10 @@ pub mod lexer {
         CloseCurlyBracket,
         Comment,
         Slash,
+        Or,
+        OrOr,
+        And,
+        AndAnd,
     }
 
     #[derive(Debug, PartialEq, Clone, Copy)]
@@ -84,6 +88,8 @@ pub mod lexer {
         fn comment_token(&mut self, l: usize) -> Token;
         fn number_token(&mut self, l: usize) -> Token;
         fn identifier_token(&mut self, l: usize) -> Token;
+        fn or_token(&mut self, l: usize) -> Token;
+        fn and_token(&mut self, l: usize) -> Token;
         fn keyword_token(t: impl AsRef<str>, l: usize) -> Option<Token>;
     }
 
@@ -248,6 +254,27 @@ pub mod lexer {
             return Token::new(TokenType::Invalid, "Found a non ending identifier", l);
         }
 
+        // Returns Or token if it only finds one | other wise it returns OrOr token
+        fn or_token(&mut self, l: usize) -> Token {
+            match &self.next() {
+                Some('|') => return Token::new(TokenType::OrOr, "||", l),
+                _ => {
+                    self.advance_back(1);
+                    return Token::new(TokenType::Or, "|", l);
+                }
+            }
+        }
+
+        // Returns And token if it only finds one & other wise it returns AndAnd token
+        fn and_token(&mut self, l: usize) -> Token {
+            match &self.next() {
+                Some('&') => return Token::new(TokenType::AndAnd, "&&", l),
+                _ => {
+                    self.advance_back(1);
+                    return Token::new(TokenType::And, "&", l);
+                }
+            }
+        }
         /// Returns a token if the token is in the existing field of tokens
         fn keyword_token(t: impl AsRef<str>, l: usize) -> Option<Token> {
             match t.as_ref() {
@@ -309,6 +336,8 @@ pub mod lexer {
                     '<' => vec.push(cursor.less_token(line)),
                     '0'..='9' => vec.push(cursor.number_token(line)),
                     '"' => vec.push(cursor.string_token(line)),
+                    '|' => vec.push(cursor.or_token(line)),
+                    '&' => vec.push(cursor.and_token(line)),
                     '[' => vec.push(Token::new(TokenType::OpenBracket, "[", line)),
                     ']' => vec.push(Token::new(TokenType::CloseBracket, "]", line)),
                     ';' => vec.push(Token::new(TokenType::SemiColon, ";", line)),

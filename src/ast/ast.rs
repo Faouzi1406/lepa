@@ -107,13 +107,13 @@ impl Case {
 }
 #[derive(Debug, PartialEq, Clone)]
 pub struct Logic {
-    pub if_: Case,
+    pub if_: Vec<Case>,
     pub do_: Box<Ast>,
     pub else_: Option<Box<Ast>>,
 }
 
 impl Logic {
-    pub fn new(case: Case, else_: Option<Box<Ast>>, do_: Ast) -> Logic {
+    pub fn new(case: Vec<Case>, else_: Option<Box<Ast>>, do_: Ast) -> Logic {
         return Logic {
             if_: case,
             do_: Box::from(do_),
