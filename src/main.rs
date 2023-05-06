@@ -40,11 +40,7 @@ fn compile() {
 }
 
 fn main() {
-    //compile()
-    let files = fs::read_to_string("./main.lp");
-    let mut lexer = Token::lex(files.unwrap());
-    let parse = Parser::new(lexer.clone()).parse().unwrap();
-    println!("{:#?}", parse);
+    compile()
     // assert!(some_number.is_some());
     // assert_eq!(
     //     some_number.unwrap().get_name().unwrap().to_str(),

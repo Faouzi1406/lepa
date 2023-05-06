@@ -168,9 +168,9 @@ pub trait CaseLogic {
 
 impl CaseLogic for Parser {
     fn get_case(&mut self) -> Result<Vec<Case>, ErrorBuilder> {
-        let mut type_var_1 = TypeVar::None;
-        let mut type_var_2 = TypeVar::None;
-        let mut current_case = Case::None;
+        let type_var_1:TypeVar;
+        let type_var_2:TypeVar;
+        let current_case:Case;
         let mut case = vec![];
 
         let val_1 = self.next().unwrap();
@@ -451,11 +451,11 @@ impl ParseTokens for Parser {
                                     };
                                     match parse_next.token_type {
                                         TokenType::SemiColon => {
-                                            let ass_t = var.type_(TypeVar::Identifier(token.value));
+                                            let _ = var.type_(TypeVar::Identifier(token.value));
                                         }
                                         TokenType::OpenBrace => {
                                             parser.advance_back(1);
-                                            let ass_t = var.type_(TypeVar::FunctionCall(
+                                            let _ = var.type_(TypeVar::FunctionCall(
                                                 parser.parse_fn_call()?,
                                             ));
                                         }

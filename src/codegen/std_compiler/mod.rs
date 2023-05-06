@@ -1,8 +1,3 @@
-use std::{
-    collections::hash_map::DefaultHasher,
-    hash::{Hash, Hasher},
-};
-
 use inkwell::{module::Linkage, values::BasicMetadataValueEnum, AddressSpace};
 
 use crate::{
@@ -79,7 +74,7 @@ impl<'ctx> Std for CodeGen<'ctx> {
                     .module
                     .add_function("printf", *print_f, Some(Linkage::External));
 
-                let call = &self
+                let _ = &self
                     .builder
                     .build_call(*printf, &args_values, "printf_call");
             }

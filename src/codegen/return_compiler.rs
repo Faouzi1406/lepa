@@ -28,7 +28,6 @@ impl<'ctx> GenReturnTypes for CodeGen<'ctx> {
     }
     // Todo: Local variables
     fn gen_id(&self, return_type: Return, function: &Func, func: &FunctionValue) {
-        println!("{:#?}", function);
         let val = self.module.get_global(&return_type.value);
 
         if val.is_some() {

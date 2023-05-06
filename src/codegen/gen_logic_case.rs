@@ -1,4 +1,4 @@
-use inkwell::{basic_block::BasicBlock, types::BasicTypeEnum, values::FunctionValue};
+use inkwell::{basic_block::BasicBlock, values::FunctionValue};
 
 use super::{CodeGen, Gen};
 use crate::ast::{
@@ -28,24 +28,24 @@ impl<'ctx> GenLogicCase<'ctx> for CodeGen<'ctx> {
         block: &BasicBlock,
         func: &FunctionValue<'ctx>,
     ) -> Result<(), String> {
-        // match &logic.if_.get(0) {
-        //     Case::None => {
-        //         return Err("Found if without any comparisons!".into());
-        //     }
-        //     Case::EqEq(_, _) => {}
-        //     Case::More(val1, val2) => {
-        //         compile_compare_nums(&self, function, logic, block, func, "more", (val1, val2))?;
-        //     }
-        //     Case::MoreEq(val1, val2) => {
-        //         compile_compare_nums(&self, function, logic, block, func, "more_eq", (val1, val2))?;
-        //     }
-        //     Case::Less(val1, val2) => {
-        //         compile_compare_nums(&self, function, logic, block, func, "less", (val1, val2))?;
-        //     }
-        //     Case::LessEq(val1, val2) => {
-        //         compile_compare_nums(&self, function, logic, block, func, "less_eq", (val1, val2))?;
-        //     }
-        // }
+        match &logic.if_.get(0).unwrap() {
+            Case::None => {
+                return Err("Found if without any comparisons!".into());
+            }
+            Case::EqEq(_val1, _val2) => {}
+            Case::More(val1, val2) => {
+                compile_compare_nums(&self, function, logic, block, func, "more", (val1, val2))?;
+            }
+            Case::MoreEq(val1, val2) => {
+                compile_compare_nums(&self, function, logic, block, func, "more_eq", (val1, val2))?;
+            }
+            Case::Less(val1, val2) => {
+                compile_compare_nums(&self, function, logic, block, func, "less", (val1, val2))?;
+            }
+            Case::LessEq(val1, val2) => {
+                compile_compare_nums(&self, function, logic, block, func, "less_eq", (val1, val2))?;
+            }
+        }
         return Ok(());
     }
 }
@@ -70,7 +70,7 @@ pub fn compile_compare_nums<'ctx>(
     (val1, val2): (&TypeVar, &TypeVar),
 ) -> Result<(), String> {
     match (val1, val2) {
-        // For static values we just replace the code with what it would do if comparison is true or false  
+        // For static values we just replace the code with what it would do if comparison is true or false
         (TypeVar::Number(num1), TypeVar::Number(num2)) => {
             if compare_nums(*num1, *num2, case) {
                 match &logic.do_.type_ {
@@ -105,7 +105,7 @@ pub fn compile_compare_nums<'ctx>(
             }
         }
         // Todo:  Handle identifiers for if statements
-        (TypeVar::Identifier(id_1), TypeVar::Identifier(id_2)) => {}
+        (TypeVar::Identifier(_), TypeVar::Identifier(_)) => {}
         case => {
             return Err(format!(
                 "Cannot check if {:#?} is more then {:#?}",

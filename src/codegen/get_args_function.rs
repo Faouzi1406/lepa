@@ -4,8 +4,8 @@ use crate::{
     errors::logger::Log,
 };
 use inkwell::{
-    types::{AnyTypeEnum, BasicTypeEnum},
-    values::{BasicMetadataValueEnum, BasicValueEnum, FunctionValue, AnyValue, AnyValueEnum},
+    types::BasicTypeEnum,
+    values::{AnyValue, AnyValueEnum, BasicMetadataValueEnum, BasicValueEnum, FunctionValue},
 };
 
 pub fn get_int_value(value: BasicValueEnum) -> Option<inkwell::values::IntValue> {
@@ -62,10 +62,10 @@ impl<'ctx> Args<'ctx> for CodeGen<'ctx> {
                                         args.push(val.into());
                                     }
                                     AnyValueEnum::PointerValue(val) => {
-                                        let load  = self.builder.build_load(val, &arg.value);
+                                        let load = self.builder.build_load(val, &arg.value);
                                         args.push(load.into());
-                                    },
-                                    val => ()
+                                    }
+                                    _ => (),
                                 }
                                 continue;
                             }

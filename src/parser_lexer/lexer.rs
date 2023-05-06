@@ -85,6 +85,7 @@ pub mod lexer {
         fn less_token(&mut self, l: usize) -> Token;
         fn more_token(&mut self, l: usize) -> Token;
         fn string_token(&mut self, l: usize) -> Token;
+        //fn char_token(&mut self, l: usize) -> Token;
         fn comment_token(&mut self, l: usize) -> Token;
         fn number_token(&mut self, l: usize) -> Token;
         fn identifier_token(&mut self, l: usize) -> Token;
@@ -173,6 +174,14 @@ pub mod lexer {
                 l,
             );
         }
+        // Char token 'c'..
+        // fn char_token(&mut self, l: usize) -> Token {
+        //     match self.next() {
+        //         Some(char) => match char {
+        //         },
+        //         _ => (),
+        //     }
+        // }
         /// Returns the comment token type and the comment
         /// Could also just return a slash if the /  isn't followed by two slashes
         fn comment_token(&mut self, l: usize) -> Token {
@@ -337,6 +346,7 @@ pub mod lexer {
                     '0'..='9' => vec.push(cursor.number_token(line)),
                     '"' => vec.push(cursor.string_token(line)),
                     '|' => vec.push(cursor.or_token(line)),
+                    //'\'' => vec.push(cursor.char_token(line)),
                     '&' => vec.push(cursor.and_token(line)),
                     '[' => vec.push(Token::new(TokenType::OpenBracket, "[", line)),
                     ']' => vec.push(Token::new(TokenType::CloseBracket, "]", line)),

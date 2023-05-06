@@ -127,7 +127,7 @@ pub fn invalid_if_statement_operator(token: Operators) -> ErrorBuilder {
         .file_name("todo:")
         .build_error()
 }
-pub fn invalid_if_statement_body(line: usize) -> ErrorBuilder {
+pub fn invalid_if_statement_body(_line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
         .message(format!(
             "Found a invalid if statement, the if statement doesn't have a body.",

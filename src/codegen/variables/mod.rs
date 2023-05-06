@@ -1,23 +1,22 @@
-use crate::{ast::function::Func, errors::logger::Log};
-use inkwell::values::FunctionValue;
+use crate::{ast::{function::Func, variable}, errors::logger::Log};
+use inkwell::{
+    types::{AnyTypeEnum, PointerType},
+    values::{AnyValue, AnyValueEnum, FunctionValue},
+};
 
 use crate::ast::variable::{TypeVar, Variable};
 
 use super::{get_args_function::Args, validation::compare_args, CodeGen, LOGGER};
 
 pub trait GenVar<'ctx> {
-    fn gen_variable(&self,  variable: &Variable, func: &FunctionValue<'ctx>);
+    fn gen_variable(&self, variable: &Variable, func: &FunctionValue<'ctx>);
 }
 
 trait Gen<'ctx> {
     fn gen_num(&self, num: &i32, variable: &Variable);
     fn gen_string(&self, string: &str, variable: &Variable);
-    fn gen_call(
-        &self,
-        call: &Func,
-        func: &FunctionValue<'ctx>,
-        variable: &Variable,
-    );
+    fn gen_call(&self, call: &Func, func: &FunctionValue<'ctx>, variable: &Variable);
+    fn gen_reassignment(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>);
 }
 
 impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
@@ -33,13 +32,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
         let arr_value = self.context.const_string(str.as_bytes(), false);
         let _ = self.builder.build_store(var, arr_value);
     }
-    fn gen_call(
-        &self,
-        call: &Func,
-        func: &FunctionValue<'ctx>,
-        variable: &Variable,
-    ) {
-        println!("hello");
+    fn gen_call(&self, call: &Func, func: &FunctionValue<'ctx>, variable: &Variable) {
         let call_fn = self.module.get_function(&call.name);
         if call_fn.is_none() {
             LOGGER.display_error(&format!(
@@ -60,20 +53,48 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
         self.builder
             .build_call(call_fn, &fn_args.to_owned(), &variable.name);
     }
+    fn gen_reassignment(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>) {
+        let item = func.get_first_basic_block();
+        match item {
+            Some(block) => {
+                let var = block.get_instruction_with_name(id);
+                match var {
+                    Some(ins) => {
+                        let ins = ins.as_any_value_enum();
+                        match ins {
+                            AnyValueEnum::IntValue(int) => {
+                                let value = self.context.i32_type();
+                                let var = self.builder.build_alloca(value, &variable.name);
+                                let _ = self.builder.build_store(var, int);
+                            }
+                            // Still kinda need to think about how I want to handle this 
+                            // &value  || something like that
+                            // I am not sure yet
+                            AnyValueEnum::PointerValue(pointer) => {
+                                let _ = self.builder.build_load(pointer, &variable.name);
+                            }
+                            _ => (),
+                        }
+                    }
+                    None => (),
+                }
+            }
+            None => {}
+        }
+    }
 }
 
 impl<'ctx> GenVar<'ctx> for CodeGen<'ctx> {
-    fn gen_variable(&self,  variable: &Variable, func: &FunctionValue<'ctx>) {
+    fn gen_variable(&self, variable: &Variable, func: &FunctionValue<'ctx>) {
         match &variable.type_ {
-            TypeVar::Arr { .. } => {
-                //Todo: Not yet suported
-            }
+            // For arrays we need to make sure that all types within the array are the same type
+            TypeVar::Arr { .. } => {}
             TypeVar::Number(value) => {
                 self.gen_num(value, &variable);
             }
             TypeVar::String(value) => self.gen_string(&value, variable),
-            TypeVar::Identifier(_) => {}
-            TypeVar::FunctionCall(call) => self.gen_call(call,  func, variable),
+            TypeVar::Identifier(id) => self.gen_reassignment(id, variable, func),
+            TypeVar::FunctionCall(call) => self.gen_call(call, func, variable),
             TypeVar::None => {}
         }
     }

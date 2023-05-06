@@ -12,7 +12,7 @@ pub struct Func {
 }
 
 impl Func {
-    pub fn remove_arg_at_index(&mut self, i:usize) -> Option<Arg> {
+    pub fn remove_arg_at_index(&mut self, i: usize) -> Option<Arg> {
         if self.args.len() < i {
             return None;
         }
