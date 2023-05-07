@@ -11,7 +11,8 @@ fn compile() {
     let files = fs::read_to_string("./main.lp");
     let mut lexer = Token::lex(files.unwrap());
     let parse = Parser::new(lexer.clone()).parse().unwrap();
-    Ast::find_unused(parse.clone());
+
+    let unused = Ast::find_unused(&parse);
 
     let uses = Use::get_use(parse.clone()).unwrap();
     let compile_uses = uses.compile().unwrap();

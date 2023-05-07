@@ -8,10 +8,9 @@ use crate::{
     },
     codegen::LOGGER,
     errors::logger::Log,
-    lepa_analyzer::unused::unused_vars::DetectorVars,
 };
 
-use self::unused_fn::DetectUnusedFunc;
+use self::{unused_fn::DetectUnusedFunc, unused_vars::DetectorVars};
 
 pub mod unused_fn;
 pub mod unused_vars;
@@ -40,31 +39,29 @@ pub trait Unused<'a> {
     ///  - Variables
     ///  - Functions
     ///  - Arguments
-    fn find_unused(ast: Ast) {
-        let mut unused: Vec<UnusedValues> = Vec::new();
-        let detector = DetectUnused::new(&ast);
-        
-
-        // unused vars
-        unused.append(&mut detector.detect_unused_vars());
+    fn find_unused(ast: &'a Ast) -> Vec<UnusedValues<'a>> {
+        let detector: DetectUnused<'a> = DetectUnused::new(ast);
+        let mut unused = Vec::new();
         unused.append(&mut detector.detect_unused_funcs());
-        //unused.append(&mut detector.detect_unused_funcs());
-
-        for var in &unused {
-            match var {
-                UnusedValues::Argument(_) => (),
+        unused.append(&mut detector.detect_unused_vars());
+        unused
+    }
+    fn log_unused(unused_values: Vec<UnusedValues<'a>>) {
+        for unused in unused_values {
+            match unused {
                 UnusedValues::Variable(var) => LOGGER.display_warning(&format!(
-                    "Found a unused {} with name: {}; on line {};",
-                    "variable".bold().yellow(),
-                    var.name,
-                    var.line
+                    "Found a unused {}, at line {}, name {}",
+                    "variable".yellow().bold(),
+                    var.line,
+                    var.name
                 )),
                 UnusedValues::Function(func) => LOGGER.display_warning(&format!(
-                    "Found a {} unused with name: {}; on line {};",
-                    "function".bold().yellow(),
-                    func.name,
-                    func.line
+                    "Found a unused {}, at line {}, name {}",
+                    "function".yellow().bold(),
+                    func.line,
+                    func.name
                 )),
+                UnusedValues::Argument(arg) => {},
             }
         }
     }

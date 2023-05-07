@@ -21,7 +21,7 @@ impl<'a> DetectedVar<'a> {
 
 pub trait DetectorVars<'a> {
     fn detect_vars(&self) -> Vec<DetectedVar<'a>>;
-    fn detect_unused_vars(&self) -> Vec<UnusedValues<'a>>;
+    fn detect_unused_vars(&self) -> Vec<UnusedValues>;
     fn detect_used_in_block_var(&self, value: &str) -> bool;
 }
 

@@ -168,9 +168,9 @@ pub trait CaseLogic {
 
 impl CaseLogic for Parser {
     fn get_case(&mut self) -> Result<Vec<Case>, ErrorBuilder> {
-        let type_var_1:TypeVar;
-        let type_var_2:TypeVar;
-        let current_case:Case;
+        let type_var_1: TypeVar;
+        let type_var_2: TypeVar;
+        let current_case: Case;
         let mut case = vec![];
 
         let val_1 = self.next().unwrap();

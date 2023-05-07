@@ -22,6 +22,16 @@ pub struct Arg {
     pub type_: TypesArg,
 }
 
+impl Into<TypeVar> for TypesArg {
+    fn into(self) -> TypeVar {
+        match self {
+            Self::String => TypeVar::String("".into()),
+            Self::Number => TypeVar::Number(0),
+            Self::None => TypeVar::None,
+        }
+    }
+}
+
 impl Arg {
     pub fn new() -> Arg {
         Arg {

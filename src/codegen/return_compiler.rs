@@ -1,4 +1,4 @@
-use inkwell::values::FunctionValue;
+use inkwell::values::{AnyValue, AnyValueEnum, FunctionValue};
 
 use super::CodeGen;
 use crate::ast::ast::{Return, ReturnTypes};
@@ -35,6 +35,27 @@ impl<'ctx> GenReturnTypes for CodeGen<'ctx> {
             let val = val.as_pointer_value();
             let load = &self.builder.build_load(val, &function.name);
             self.builder.build_return(Some(load));
+        }
+
+        let local = func.get_first_basic_block();
+        if let Some(local) = local {
+            let local_item = local.get_instruction_with_name(&return_type.value);
+            if let Some(local) = local_item {
+                let val = local.as_any_value_enum();
+                println!("{:#?}", val);
+                match val {
+                    AnyValueEnum::IntValue(int) => {
+                        self.builder.build_return(Some(&int));
+                        return;
+                    }
+                    AnyValueEnum::PointerValue(val) => {
+                        let load = &self.builder.build_load(val, &return_type.value);
+                        self.builder.build_return(Some(load));
+                        return;
+                    }
+                    _ => return,
+                }
+            }
         }
 
         let param_ = function.get_arg_index_(&return_type.value);
