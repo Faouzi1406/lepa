@@ -1,3 +1,5 @@
+use colored::Colorize;
+
 use crate::{
     ast::{
         ast::{Arg, Ast},
@@ -9,14 +11,16 @@ use crate::{
     lepa_analyzer::unused::unused_vars::DetectorVars,
 };
 
-pub mod unused_vars;
+use self::unused_fn::DetectUnusedFunc;
+
 pub mod unused_fn;
+pub mod unused_vars;
 
 #[derive(Debug)]
-pub enum UnusedValues {
-    Variable(Variable),
-    Function(Func),
-    Argument(Arg),
+pub enum UnusedValues<'a> {
+    Variable(&'a Variable),
+    Function(&'a Func),
+    Argument(&'a Arg),
 }
 
 struct DetectUnused<'a> {
@@ -24,38 +28,46 @@ struct DetectUnused<'a> {
 }
 
 impl<'a> DetectUnused<'a> {
-    fn new(ast: &'a Ast) -> DetectUnused {
-        DetectUnused {  ast }
+    fn new(ast: &'a Ast) -> DetectUnused<'a> {
+        DetectUnused { ast }
     }
 }
 
-pub trait Unused {
+pub trait Unused<'a> {
     /// Finds all unused value's.
     ///
     /// Cases:
     ///  - Variables
     ///  - Functions
     ///  - Arguments
-    fn find_unused(ast: Ast) -> Vec<UnusedValues> {
-        let mut unused = Vec::new();
+    fn find_unused(ast: Ast) {
+        let mut unused: Vec<UnusedValues> = Vec::new();
         let detector = DetectUnused::new(&ast);
+        
 
         // unused vars
-        let mut found_var = detector.detect_unused_vars();
-        unused.append(&mut found_var);
+        unused.append(&mut detector.detect_unused_vars());
+        unused.append(&mut detector.detect_unused_funcs());
+        //unused.append(&mut detector.detect_unused_funcs());
 
         for var in &unused {
             match var {
                 UnusedValues::Argument(_) => (),
-                UnusedValues::Variable(var) => LOGGER.warning(&format!(
-                    "Found a unused variable with name: {}; on line {};",
-                    var.name, var.line
+                UnusedValues::Variable(var) => LOGGER.display_warning(&format!(
+                    "Found a unused {} with name: {}; on line {};",
+                    "variable".bold().yellow(),
+                    var.name,
+                    var.line
                 )),
-                _ => (),
+                UnusedValues::Function(func) => LOGGER.display_warning(&format!(
+                    "Found a {} unused with name: {}; on line {};",
+                    "function".bold().yellow(),
+                    func.name,
+                    func.line
+                )),
             }
         }
-        unused
     }
 }
 
-impl Unused for Ast {}
+impl<'a> Unused<'a> for Ast {}

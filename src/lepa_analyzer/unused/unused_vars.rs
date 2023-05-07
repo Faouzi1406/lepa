@@ -8,32 +8,32 @@ use crate::lepa_analyzer::unused::UnusedValues;
 use crate::lepa_analyzer::Variable;
 
 #[derive(Debug)]
-pub struct DetectedVar {
-    pub block: Ast,
-    pub var: Variable,
+pub struct DetectedVar<'a> {
+    pub block: &'a Ast,
+    pub var: &'a Variable,
 }
 
-impl DetectedVar {
-    fn new(block: Ast, var: Variable) -> DetectedVar {
+impl<'a> DetectedVar<'a> {
+    fn new(block: &'a Ast, var: &'a Variable) -> DetectedVar<'a> {
         return DetectedVar { block, var };
     }
 }
 
-pub trait DetectorVars {
-    fn detect_vars(&self) -> Vec<DetectedVar>;
+pub trait DetectorVars<'a> {
+    fn detect_vars(&self) -> Vec<DetectedVar<'a>>;
     fn detect_unused_vars(&self) -> Vec<UnusedValues>;
-    fn detect_used_in_block(&self, value: &str) -> bool;
+    fn detect_used_in_block_var(&self, value: &str) -> bool;
 }
 
-impl<'a> DetectorVars for DetectUnused<'a> {
-    fn detect_vars(&self) -> Vec<DetectedVar> {
+impl<'a> DetectorVars<'a> for DetectUnused<'a> {
+    fn detect_vars(&self) -> Vec<DetectedVar<'a>> {
         let mut vars = Vec::new();
         let block = self.ast;
 
         for token in &self.ast.body {
             match &token.type_ {
                 Type::Variable(var) => {
-                    vars.push(DetectedVar::new(block.clone(), var.clone()));
+                    vars.push(DetectedVar::new(block, var));
                 }
                 Type::Function(func) => match &func.body {
                     Some(body) => {
@@ -66,8 +66,8 @@ impl<'a> DetectorVars for DetectUnused<'a> {
         vars
     }
 
-    fn detect_unused_vars(&self) -> Vec<UnusedValues> {
-        let detect_vars = &self.detect_vars();
+    fn detect_unused_vars(&self) -> Vec<UnusedValues<'a>> {
+        let detect_vars = self.detect_vars();
         let mut unused_vars = Vec::new();
         for detected_var in detect_vars {
             let mut used = false;
@@ -84,14 +84,14 @@ impl<'a> DetectorVars for DetectUnused<'a> {
                     },
                     Type::Block => {
                         let func = DetectUnused::new(token);
-                        if func.detect_used_in_block(&detected_var.var.name) {
+                        if func.detect_used_in_block_var(&detected_var.var.name) {
                             used = true;
                             break;
                         };
                     }
                     Type::Function(_) => {
                         let func = DetectUnused::new(token);
-                        if func.detect_used_in_block(&detected_var.var.name) {
+                        if func.detect_used_in_block_var(&detected_var.var.name) {
                             used = true;
                             break;
                         };
@@ -110,7 +110,7 @@ impl<'a> DetectorVars for DetectUnused<'a> {
                                     };
 
                                     let block = DetectUnused::new(&logic.do_);
-                                    if block.detect_used_in_block(&detected_var.var.name) {
+                                    if block.detect_used_in_block_var(&detected_var.var.name) {
                                         used = true;
                                         break;
                                     };
@@ -119,7 +119,7 @@ impl<'a> DetectorVars for DetectUnused<'a> {
                                         let else_ = &logic.else_.as_ref().unwrap();
                                         let block =
                                             DetectUnused::new(&else_);
-                                        if block.detect_used_in_block(&detected_var.var.name) {
+                                        if block.detect_used_in_block_var(&detected_var.var.name) {
                                             used = true;
                                             break;
                                         };
@@ -139,13 +139,13 @@ impl<'a> DetectorVars for DetectUnused<'a> {
                 }
             }
             if !used {
-                unused_vars.push(UnusedValues::Variable(detected_var.var.to_owned()));
+                unused_vars.push(UnusedValues::Variable(&detected_var.var));
             }
         }
         unused_vars
     }
 
-    fn detect_used_in_block(&self, value: &str) -> bool {
+    fn detect_used_in_block_var(&self, value: &str) -> bool {
         for token in &self.ast.body {
             match &token.type_ {
                 Type::Variable(var) => match &var.type_ {
@@ -165,12 +165,12 @@ impl<'a> DetectorVars for DetectUnused<'a> {
                     if func.body.is_some() {
                         let body = func.body.as_ref().unwrap();
                         let body = DetectUnused::new(body);
-                        return body.detect_used_in_block(value);
+                        return body.detect_used_in_block_var(value);
                     }
                 }
                 Type::Block => {
                     let body = DetectUnused::new(token);
-                    return body.detect_used_in_block(value);
+                    return body.detect_used_in_block_var(value);
                 }
                 _ => continue,
             }

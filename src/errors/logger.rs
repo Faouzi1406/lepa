@@ -74,6 +74,8 @@ pub trait Log {
     /// log.info("This is a info log"); // This will NOT be printed to terminal
     /// ```
     fn warning<T: Debug>(&self, input: &T);
+    /// Does the same as warning but only where T is displayable
+    fn display_warning<T: Display>(&self, input: &T);
     /// error logs a new error message to the terminal.
     /// Error logs are toplevel meaning they can't and wont be ignored.
     ///
@@ -109,6 +111,14 @@ impl Log for Logger {
         match &self.0 {
             LogLevels::Info | LogLevels::Warning => {
                 println!("{} {:#?}", "[WARNING]".yellow().bold(), input)
+            }
+            _ => (),
+        }
+    }
+    fn display_warning<T: Display>(&self, input: &T) {
+        match &self.0 {
+            LogLevels::Info | LogLevels::Warning => {
+                println!("{} {}", "[WARNING]".yellow().bold(), input)
             }
             _ => (),
         }

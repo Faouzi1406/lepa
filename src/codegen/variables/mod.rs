@@ -1,8 +1,5 @@
-use crate::{ast::{function::Func, variable}, errors::logger::Log};
-use inkwell::{
-    types::{AnyTypeEnum, PointerType},
-    values::{AnyValue, AnyValueEnum, FunctionValue},
-};
+use crate::{ast::function::Func, errors::logger::Log};
+use inkwell::values::{AnyValue, AnyValueEnum, FunctionValue};
 
 use crate::ast::variable::{TypeVar, Variable};
 
@@ -16,7 +13,7 @@ trait Gen<'ctx> {
     fn gen_num(&self, num: &i32, variable: &Variable);
     fn gen_string(&self, string: &str, variable: &Variable);
     fn gen_call(&self, call: &Func, func: &FunctionValue<'ctx>, variable: &Variable);
-    fn gen_reassignment(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>);
+    fn gen_assign_identifier(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>);
 }
 
 impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
@@ -53,7 +50,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
         self.builder
             .build_call(call_fn, &fn_args.to_owned(), &variable.name);
     }
-    fn gen_reassignment(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>) {
+    fn gen_assign_identifier(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>) {
         let item = func.get_first_basic_block();
         match item {
             Some(block) => {
@@ -67,7 +64,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
                                 let var = self.builder.build_alloca(value, &variable.name);
                                 let _ = self.builder.build_store(var, int);
                             }
-                            // Still kinda need to think about how I want to handle this 
+                            // Still kinda need to think about how I want to handle this
                             // &value  || something like that
                             // I am not sure yet
                             AnyValueEnum::PointerValue(pointer) => {
@@ -93,7 +90,7 @@ impl<'ctx> GenVar<'ctx> for CodeGen<'ctx> {
                 self.gen_num(value, &variable);
             }
             TypeVar::String(value) => self.gen_string(&value, variable),
-            TypeVar::Identifier(id) => self.gen_reassignment(id, variable, func),
+            TypeVar::Identifier(id) => self.gen_assign_identifier(id, variable, func),
             TypeVar::FunctionCall(call) => self.gen_call(call, func, variable),
             TypeVar::None => {}
         }
