@@ -26,7 +26,6 @@ impl<'ctx> GenReturnTypes for CodeGen<'ctx> {
         let num = var.const_int(num as u64, false);
         self.builder.build_return(Some(&num));
     }
-    // Todo: Local variables
     fn gen_id(&self, return_type: Return, function: &Func, func: &FunctionValue) {
         let val = self.module.get_global(&return_type.value);
 
@@ -40,9 +39,9 @@ impl<'ctx> GenReturnTypes for CodeGen<'ctx> {
         let local = func.get_first_basic_block();
         if let Some(local) = local {
             let local_item = local.get_instruction_with_name(&return_type.value);
+
             if let Some(local) = local_item {
                 let val = local.as_any_value_enum();
-                println!("{:#?}", val);
                 match val {
                     AnyValueEnum::IntValue(int) => {
                         self.builder.build_return(Some(&int));

@@ -10,8 +10,9 @@ use crate::{
     errors::logger::Log,
 };
 
-use self::{unused_fn::DetectUnusedFunc, unused_vars::DetectorVars};
+use self::{unused_args::DetectUnusedArgs, unused_fn::DetectUnusedFunc, unused_vars::DetectorVars};
 
+pub mod unused_args;
 pub mod unused_fn;
 pub mod unused_vars;
 
@@ -19,7 +20,7 @@ pub mod unused_vars;
 pub enum UnusedValues<'a> {
     Variable(&'a Variable),
     Function(&'a Func),
-    Argument(&'a Arg),
+    Argument(&'a Arg, &'a str),
 }
 
 struct DetectUnused<'a> {
@@ -44,8 +45,11 @@ pub trait Unused<'a> {
         let mut unused = Vec::new();
         unused.append(&mut detector.detect_unused_funcs());
         unused.append(&mut detector.detect_unused_vars());
+        unused.append(&mut detector.detect_unused_args());
+        let args = detector.detect_arg();
         unused
     }
+    /// Takes in all unused values and logs them to the terminal in a formatted way
     fn log_unused(unused_values: Vec<UnusedValues<'a>>) {
         for unused in unused_values {
             match unused {
@@ -61,7 +65,12 @@ pub trait Unused<'a> {
                     func.line,
                     func.name
                 )),
-                UnusedValues::Argument(arg) => {},
+                UnusedValues::Argument(arg, func) => LOGGER.display_warning(&format!(
+                    "Found a unused {}; name = {}, in function {}",
+                    "argument".yellow().bold(),
+                    arg.value,
+                    func
+                )),
             }
         }
     }

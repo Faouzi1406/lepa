@@ -13,8 +13,9 @@ fn compile() {
     let parse = Parser::new(lexer.clone()).parse().unwrap();
 
     let unused = Ast::find_unused(&parse);
+    Ast::log_unused(unused);
 
-    let uses = Use::get_use(parse.clone()).unwrap();
+    let uses = Use::get_use(&parse).unwrap();
     let compile_uses = uses.compile().unwrap();
     let mut tokens_now = Vec::new();
     for mut tokens in compile_uses {
@@ -42,9 +43,4 @@ fn compile() {
 
 fn main() {
     compile()
-    // assert!(some_number.is_some());
-    // assert_eq!(
-    //     some_number.unwrap().get_name().unwrap().to_str(),
-    //     Ok("some_number")
-    // )
 }

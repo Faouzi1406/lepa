@@ -52,29 +52,29 @@ impl Use {
 }
 
 pub trait GetUses {
-    fn get_use(ast: Ast) -> Result<Used, ErrorBuilder> {
+    fn get_use(ast: &Ast) -> Result<Used, ErrorBuilder> {
         let uses = Self::get_uses(ast);
         return Ok(Used(uses?));
     }
 
-    fn get_uses(ast: Ast) -> Result<Vec<Use>, ErrorBuilder> {
+    fn get_uses(ast: &Ast) -> Result<Vec<Use>, ErrorBuilder> {
         let mut uses = Vec::new();
-        for ast in ast.body {
-            match ast.type_ {
+        for ast in &ast.body {
+            match &ast.type_ {
                 Type::Use(use_) => {
                     let true = use_.validate() else {
                     return Err(ErrorBuilder::new().message(format!("Found a invalid use: {};", use_.0)).helper("consider changing the extension of the file to .lp or bringing it into scope.").build_error())
                 };
-                    uses.push(use_);
+                    uses.push(use_.clone());
                 }
                 Type::Block => {
-                    uses.append(&mut Self::get_uses(ast)?);
+                    uses.append(&mut Self::get_uses(&ast)?);
                 }
                 Type::Function(func) => {
-                    let Some(body) = func.body else {
+                    let Some(body) = &func.body else {
                         continue;
                     };
-                    uses.append(&mut Self::get_uses(*body)?);
+                    uses.append(&mut Self::get_uses(&body)?);
                 }
                 _ => (),
             }

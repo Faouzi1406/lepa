@@ -214,7 +214,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
                     }
                 }
                 Type::Variable(var) => {
-                    let _ = &self.gen_variable(&var, func);
+                    let _ = &self.gen_variable(&var, function, func);
                 }
                 Type::Function(func) => {
                     let _ = &self.gen_func(func);

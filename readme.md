@@ -43,3 +43,5 @@ Today was just me working on setting up llvm and making a start with compiling t
 - [x] Const support; Added support for creating global constant variables, this means they are assured to never be reassigned or changed in anyway, or atleast it will later. 
 
 - [x] Support for use; Using different files
+
+Todo: .. I should probably add everything I have done when I have time 

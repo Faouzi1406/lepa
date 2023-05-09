@@ -1,15 +1,15 @@
-use "other.lp";
-
 const var = 20;
 
-fn wowie(number lol) number {
+fn wowie(number lol, number other) number {
         let wow = 100;
-	printf("number: %d\\n wow= %d", lol, wow);
-	return wow;
+	let kek = lol;
+	return kek;
 }
 
 fn main() {
-	let yo = wowie(var);
-	printf("yo = %d", yo);
+	let yo = wowie(40, 100);
+	if 10 >= 10 {
+		printf("yo = %d", yo);
+	}
 	return;
 }

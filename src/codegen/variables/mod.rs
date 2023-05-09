@@ -1,4 +1,8 @@
-use crate::{ast::function::Func, errors::logger::Log};
+use crate::{
+    ast::function::{self, Func},
+    errors::logger::Log,
+};
+use colored::Colorize;
 use inkwell::values::{AnyValue, AnyValueEnum, FunctionValue};
 
 use crate::ast::variable::{TypeVar, Variable};
@@ -6,14 +10,20 @@ use crate::ast::variable::{TypeVar, Variable};
 use super::{get_args_function::Args, validation::compare_args, CodeGen, LOGGER};
 
 pub trait GenVar<'ctx> {
-    fn gen_variable(&self, variable: &Variable, func: &FunctionValue<'ctx>);
+    fn gen_variable(&self, variable: &Variable, function: &Func, func: &FunctionValue<'ctx>);
 }
 
 trait Gen<'ctx> {
     fn gen_num(&self, num: &i32, variable: &Variable);
     fn gen_string(&self, string: &str, variable: &Variable);
     fn gen_call(&self, call: &Func, func: &FunctionValue<'ctx>, variable: &Variable);
-    fn gen_assign_identifier(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>);
+    fn gen_assign_identifier(
+        &self,
+        id: &str,
+        function: &Func,
+        variable: &Variable,
+        func: &FunctionValue<'ctx>,
+    );
 }
 
 impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
@@ -50,7 +60,13 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
         self.builder
             .build_call(call_fn, &fn_args.to_owned(), &variable.name);
     }
-    fn gen_assign_identifier(&self, id: &str, variable: &Variable, func: &FunctionValue<'ctx>) {
+    fn gen_assign_identifier(
+        &self,
+        id: &str,
+        function: &Func,
+        variable: &Variable,
+        func: &FunctionValue<'ctx>,
+    ) {
         let item = func.get_first_basic_block();
         match item {
             Some(block) => {
@@ -73,16 +89,41 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
                             _ => (),
                         }
                     }
-                    None => (),
+                    None => {
+                        let arg = function.get_arg_index_(id);
+                        if let Some(arg) = arg {
+                            let func_arg = func.get_nth_param(arg);
+                            if let Some(arg) = func_arg {
+                                let arg = arg.as_any_value_enum();
+                                match arg {
+                                    inkwell::values::AnyValueEnum::IntValue(value) => {
+                                        let int = self.context.i32_type();
+                                        let var = self.builder.build_alloca(int, &variable.name);
+                                        let _ = &self.builder.build_store(var, value);
+                                    }
+                                    inkwell::values::AnyValueEnum::PointerValue(value) => {
+                                        let _ = &self.builder.build_load(value, &variable.name);
+                                    }
+                                    _ => todo!("Not yet supported argument type"),
+                                }
+                            } else {
+                                LOGGER.error(&"Found argument but not at index.");
+                            }
+                        } else {
+                            LOGGER.error(&format!("tried assigning {}, to {}, but {} doesn't exist within this scope.", id.blue().bold(), variable.name.bold().yellow(), id.blue().bold()));
+                        }
+                    }
                 }
             }
-            None => {}
+            None => {
+                //let args =
+            }
         }
     }
 }
 
 impl<'ctx> GenVar<'ctx> for CodeGen<'ctx> {
-    fn gen_variable(&self, variable: &Variable, func: &FunctionValue<'ctx>) {
+    fn gen_variable(&self, variable: &Variable, function: &Func, func: &FunctionValue<'ctx>) {
         match &variable.type_ {
             // For arrays we need to make sure that all types within the array are the same type
             TypeVar::Arr { .. } => {}
@@ -90,7 +131,7 @@ impl<'ctx> GenVar<'ctx> for CodeGen<'ctx> {
                 self.gen_num(value, &variable);
             }
             TypeVar::String(value) => self.gen_string(&value, variable),
-            TypeVar::Identifier(id) => self.gen_assign_identifier(id, variable, func),
+            TypeVar::Identifier(id) => self.gen_assign_identifier(id, function, variable, func),
             TypeVar::FunctionCall(call) => self.gen_call(call, func, variable),
             TypeVar::None => {}
         }
