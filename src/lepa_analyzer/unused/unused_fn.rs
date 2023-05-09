@@ -9,7 +9,7 @@ pub struct DetectedFunc<'a> {
 
 impl<'a> DetectedFunc<'a> {
     pub fn new(func: &'a Func) -> DetectedFunc<'a> {
-        return DetectedFunc { func };
+        DetectedFunc { func }
     }
 }
 

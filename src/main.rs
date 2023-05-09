@@ -10,8 +10,14 @@ use lepa::{
 fn compile() {
     let files = fs::read_to_string("./main.lp");
     let mut lexer = Token::lex(files.unwrap());
-    let parse = Parser::new(lexer.clone()).parse().unwrap();
+    let parse = Parser::new(lexer.clone()).parse();
 
+    if parse.is_err() {
+        println!("{}", parse.err().unwrap());
+        return;
+    }
+
+    let parse = parse.unwrap();
     let unused = Ast::find_unused(&parse);
     Ast::log_unused(unused);
 
@@ -24,6 +30,7 @@ fn compile() {
     tokens_now.append(&mut lexer);
 
     let parse = Parser::new(tokens_now).parse().unwrap();
+
     let compile = parse.compile();
     let main_file = std::fs::File::create("./target/main");
     match main_file {

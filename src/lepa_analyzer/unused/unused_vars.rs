@@ -1,5 +1,6 @@
 use crate::ast::ast::Ast;
 use crate::ast::ast::Case;
+use crate::ast::ast::ReturnTypes;
 use crate::ast::ast::Type;
 use crate::ast::ast::TypesArg;
 use crate::ast::variable::TypeVar;
@@ -96,6 +97,14 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                             break;
                         };
                     }
+                    Type::Return(val) => {
+                        if val.type_ == ReturnTypes::Identifier {
+                            if val.value ==  detected_var.var.name {
+                                used = true;
+                                break;
+                            }
+                        }
+                    }
                     Type::Logic(logic) => {
                         for l in &logic.if_ {
                             match l {
@@ -166,6 +175,13 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                         let body = DetectUnused::new(body);
                         return body.detect_used_in_block_var(value);
                     }
+                }
+                Type::Return(val) => {
+                        if val.type_ == ReturnTypes::Identifier {
+                            if val.value ==  value {
+                                return true;
+                            }
+                        }
                 }
                 Type::Block => {
                     let body = DetectUnused::new(token);
