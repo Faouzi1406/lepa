@@ -46,7 +46,7 @@ pub trait Unused<'a> {
         unused.append(&mut detector.detect_unused_funcs());
         unused.append(&mut detector.detect_unused_vars());
         unused.append(&mut detector.detect_unused_args());
-        let args = detector.detect_arg();
+        let _args = detector.detect_arg();
         unused
     }
     /// Takes in all unused values and logs them to the terminal in a formatted way

@@ -1,6 +1,6 @@
 use colored::Colorize;
 
-use crate::parser_lexer::lexer::lexer::{Operators, Token};
+use crate::parser_lexer::lexer::{Operators, Token};
 
 use super::error::{BuildError, ErrorBuilder};
 
@@ -39,7 +39,7 @@ pub fn non_ending_variable(var: String, line: usize) -> ErrorBuilder {
 ///     be parsed.
 pub fn invalid_function_syntax_missing_id(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!("Found invalid function syntax."))
+        .message("Found invalid function syntax.")
         .line(line)
         .file_name("todo:.rs")
         .helper(format!(
@@ -62,7 +62,7 @@ pub fn invalid_function_syntax_missing_id(line: usize) -> ErrorBuilder {
 ///     be parsed.
 pub fn invalid_function_body_syntax(name: String, line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!("Found invalid function syntax."))
+        .message("Found invalid function syntax.")
         .line(line)
         .file_name("todo:")
         .helper(format!(
@@ -98,7 +98,7 @@ pub fn invalid_function_call(name: String, line: usize) -> ErrorBuilder {
 
 pub fn invalid_arr_no_end(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!("Invalid syntax found for array",))
+        .message("Invalid syntax found for array")
         .helper(format!(
             "consider adding a end to the array {}",
             "]".yellow().bold()
@@ -110,7 +110,7 @@ pub fn invalid_arr_no_end(line: usize) -> ErrorBuilder {
 
 pub fn invalid_return_no_end(line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!("Invalid syntax found for return",))
+        .message("Invalid syntax found for return")
         .helper(format!(
             "consider adding a end to the return statement: {}",
             ";".yellow().bold()
@@ -122,16 +122,14 @@ pub fn invalid_return_no_end(line: usize) -> ErrorBuilder {
 
 pub fn invalid_if_statement_operator(token: Operators) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!("Found a invalid if statement operator",))
+        .message("Found a invalid if statement operator")
         .helper(format!("Found: {:#?}", token))
         .file_name("todo:")
         .build_error()
 }
 pub fn invalid_if_statement_body(_line: usize) -> ErrorBuilder {
     ErrorBuilder::new()
-        .message(format!(
-            "Found a invalid if statement, the if statement doesn't have a body.",
-        ))
+        .message("Found a invalid if statement, the if statement doesn't have a body.")
         .helper(format!(
             "Consider adding  a body: {:#?}",
             "-> { <<body>> } <-".bold().yellow()
@@ -147,9 +145,7 @@ pub fn invalid_use(file: Option<String>, line: usize) -> ErrorBuilder {
             .line(line)
             .build_error(),
         None => ErrorBuilder::new()
-            .file_name(format!(
-                "Found invalid use statement: no filename was found"
-            ))
+            .file_name("Found invalid use statement: no filename was found")
             .helper(format!(
                 "Consider adding a file name: {}",
                 "use \"file\"".bold().yellow()
@@ -157,4 +153,20 @@ pub fn invalid_use(file: Option<String>, line: usize) -> ErrorBuilder {
             .line(line)
             .build_error(),
     }
+}
+
+/// This error occurs whenever we parse a functions argument but find no close:
+///
+/// # Cases
+///
+/// Here there is no close so we return the error with the helper: Consider ending a closing brace
+/// - (string hello, number hello ...
+pub fn args_no_close(file: Option<String>, line: usize) -> ErrorBuilder {
+    let mut builder = ErrorBuilder::new();
+    if let Some(file) = file {
+        builder.file_name(file);
+    }
+    builder.line(line);
+    builder.helper("Add a closing brace -> ) <- to the end of the listed arguments");
+    builder.build_error()
 }

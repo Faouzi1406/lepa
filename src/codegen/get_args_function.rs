@@ -106,6 +106,6 @@ impl<'ctx> Args<'ctx> for CodeGen<'ctx> {
             }
         }
 
-        return args;
+        args
     }
 }

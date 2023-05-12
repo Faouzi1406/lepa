@@ -124,14 +124,10 @@ impl Log for Logger {
         }
     }
     fn error<T: Debug>(&self, input: &T) {
-        match &self.0 {
-            _ => println!("{} {:#?}", "[Error]".red().bold(), input),
-        }
+        println!("{} {:#?}", "[Error]".red().bold(), input)
     }
     fn display_error<T: Display>(&self, input: &T) {
-        match &self.0 {
-            _ => println!("{} {}", "[Error]".red().bold(), input),
-        }
+        println!("{} {}", "[Error]".red().bold(), input)
     }
 }
 

@@ -27,5 +27,5 @@ pub fn compare_args(args_fn: Vec<BasicValueEnum>, args_input: Vec<BasicMetadataV
         }
     }
 
-    return true;
+    true
 }

@@ -1,6 +1,6 @@
 use crate::{
     errors::{error::ErrorBuilder, error_messages::invalid_if_statement_operator},
-    parser_lexer::lexer::lexer::Operators,
+    parser_lexer::lexer::Operators,
 };
 
 use super::{
@@ -22,12 +22,12 @@ pub struct Arg {
     pub type_: TypesArg,
 }
 
-impl Into<TypeVar> for TypesArg {
-    fn into(self) -> TypeVar {
-        match self {
-            Self::String => TypeVar::String("".into()),
-            Self::Number => TypeVar::Number(0),
-            Self::None => TypeVar::None,
+impl From<TypesArg> for TypeVar {
+    fn from(val: TypesArg) -> Self {
+        match val {
+            TypesArg::String => TypeVar::String("".into()),
+            TypesArg::Number => TypeVar::Number(0),
+            TypesArg::None => TypeVar::None,
         }
     }
 }
@@ -40,7 +40,7 @@ impl Arg {
         }
     }
     pub fn assign_value(&mut self, value: String) -> Result<(), &'static str> {
-        if self.value != "" {
+        if !self.value.is_empty() {
             return Err("This argument already has a value");
         }
         self.value = value;
@@ -121,11 +121,11 @@ pub struct Logic {
 
 impl Logic {
     pub fn new(case: Vec<Case>, else_: Option<Box<Ast>>, do_: Ast) -> Logic {
-        return Logic {
+        Logic {
             if_: case,
             do_: Box::from(do_),
             else_,
-        };
+        }
     }
 }
 

@@ -2,7 +2,7 @@ use std::{fs, path::PathBuf};
 
 use crate::{
     errors::error::{BuildError, ErrorBuilder},
-    parser_lexer::lexer::lexer::{Lexer, Token},
+    parser_lexer::lexer::{Lexer, Token},
 };
 
 use super::ast::{Ast, Type};
@@ -54,7 +54,7 @@ impl Use {
 pub trait GetUses {
     fn get_use(ast: &Ast) -> Result<Used, ErrorBuilder> {
         let uses = Self::get_uses(ast);
-        return Ok(Used(uses?));
+        Ok(Used(uses?))
     }
 
     fn get_uses(ast: &Ast) -> Result<Vec<Use>, ErrorBuilder> {
@@ -68,18 +68,18 @@ pub trait GetUses {
                     uses.push(use_.clone());
                 }
                 Type::Block => {
-                    uses.append(&mut Self::get_uses(&ast)?);
+                    uses.append(&mut Self::get_uses(ast)?);
                 }
                 Type::Function(func) => {
                     let Some(body) = &func.body else {
                         continue;
                     };
-                    uses.append(&mut Self::get_uses(&body)?);
+                    uses.append(&mut Self::get_uses(body)?);
                 }
                 _ => (),
             }
         }
-        return Ok(uses);
+        Ok(uses)
     }
 }
 
@@ -97,6 +97,6 @@ impl CompileUses for Used {
             let lexed = Token::lex(string);
             compile_used.push(UsedCompiled::new(file.0.clone(), lexed));
         }
-        return Ok(compile_used);
+        Ok(compile_used)
     }
 }

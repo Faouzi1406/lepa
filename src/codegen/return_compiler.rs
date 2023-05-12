@@ -92,6 +92,6 @@ impl<'ctx> GenReturn for CodeGen<'ctx> {
             }
         }
 
-        return Ok(());
+        Ok(())
     }
 }

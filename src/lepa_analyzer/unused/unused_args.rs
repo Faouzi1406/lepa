@@ -38,17 +38,17 @@ pub trait DetectUnusedArgs<'a> {
                 _ => continue,
             }
         }
-        return true;
+        true
     }
 }
 
 impl<'a> DetectedArg<'a> {
     pub fn new(arg: &'a Arg, block: &'a Ast, func_name: &'a str) -> DetectedArg<'a> {
-        return Self {
+        Self {
             func_name,
             arg,
             block,
-        };
+        }
     }
     pub fn multiple(
         args_: &'a Vec<Arg>,
@@ -57,7 +57,7 @@ impl<'a> DetectedArg<'a> {
     ) -> Vec<DetectedArg<'a>> {
         let mut args = Vec::new();
         for arg in args_ {
-            let unused = DetectedArg::new(&arg, block, func_name);
+            let unused = DetectedArg::new(arg, block, func_name);
             args.push(unused);
         }
         args
@@ -115,7 +115,7 @@ impl<'a> DetectUnusedArgs<'a> for DetectUnused<'a> {
                     }
                 }
                 Type::Block => {
-                    if !DetectUnused::detect_unused_args_block(&item.block, &item.arg.value) {
+                    if !DetectUnused::detect_unused_args_block(item.block, &item.arg.value) {
                         used = true;
                     }
                 }

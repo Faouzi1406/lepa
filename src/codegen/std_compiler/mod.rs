@@ -1,18 +1,17 @@
-use inkwell::{module::Linkage, values::BasicMetadataValueEnum, AddressSpace};
+mod math;
+mod print_f;
 
-use crate::{
-    ast::{ast::TypesArg, function::Func},
-    errors::logger::Log,
-};
-
-use super::{CodeGen, LOGGER};
+use self::{math::StdMath, print_f::StdPrint};
+use super::CodeGen;
+use crate::ast::function::Func;
+use inkwell::values::BasicMetadataValueEnum;
 
 pub trait Std {
     /// Std functions
     ///
     /// Matches a function against a existing compiler implementation of the function;
     ///
-    /// print("compile me :)"); // Will get detected by the std_compiler and turned into it's
+    /// @print("Hello there!"); // Will get detected by the std_compiler and turned into it's
     /// llvm ir/ assembly implementation of the function
     ///
     /// These functions are usually not touched by the user and have a wrapper implemented in the
@@ -21,8 +20,8 @@ pub trait Std {
         &self,
         func: &Func,
         args_values: Vec<BasicMetadataValueEnum>,
+        var_name: Option<&str>,
     ) -> Result<(), String>;
-    fn std_print_f(&self, func: &Func, args_values: Vec<BasicMetadataValueEnum>);
 }
 
 impl<'ctx> Std for CodeGen<'ctx> {
@@ -30,9 +29,11 @@ impl<'ctx> Std for CodeGen<'ctx> {
         &self,
         func: &Func,
         args_values: Vec<BasicMetadataValueEnum>,
+        var_name: Option<&str>,
     ) -> Result<(), String> {
         match func.name.as_str() {
-            "printf" => self.std_print_f(func, args_values),
+            "@printf" => self.std_print_f(func, args_values),
+            "@add" if var_name.is_some() => self.std_add(args_values, func, var_name.unwrap()),
             name => {
                 return Err(format!(
                     "Got a std_function call but the function {}; is not a std function",
@@ -40,51 +41,6 @@ impl<'ctx> Std for CodeGen<'ctx> {
                 ))
             }
         }
-        return Ok(());
-    }
-    fn std_print_f(&self, func: &Func, args_values: Vec<BasicMetadataValueEnum>) {
-        let Some(first_arg) = func.args.get(0) else {
-            LOGGER.error(&"Printf expected a value but got none.");
-            return;
-        };
-
-        match &first_arg.type_ {
-            TypesArg::String => {
-                let printf = &self.module.get_function("printf");
-
-                if printf.is_some() {
-                    let _ = &self.builder.build_call(
-                        printf.unwrap(),
-                        &args_values.clone(),
-                        "printf_call",
-                    );
-                    return;
-                }
-
-                let print_f = &self.context.i32_type().fn_type(
-                    &[self
-                        .context
-                        .i8_type()
-                        .ptr_type(AddressSpace::default())
-                        .into()],
-                    true,
-                );
-
-                let printf = &self
-                    .module
-                    .add_function("printf", *print_f, Some(Linkage::External));
-
-                let _ = &self
-                    .builder
-                    .build_call(*printf, &args_values, "printf_call");
-            }
-            value => {
-                LOGGER.error(&format!(
-                    "Printf a string as first value but got. {:#?}",
-                    value
-                ));
-                return;
-            }
-        }
+        Ok(())
     }
 }

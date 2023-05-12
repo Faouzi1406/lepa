@@ -14,7 +14,7 @@ impl<'ctx> GenFunctionCall<'ctx> for CodeGen<'ctx> {
     fn gen_function_call(&self, function: &Func, func: &FunctionValue<'ctx>) -> Result<(), String> {
         let args = &self.get_args_value(function, func);
 
-        let std = &self.std_functions(function, args.clone());
+        let std = &self.std_functions(function, args.clone(), None);
         match std {
             Ok(_) => {
                 return Ok(());
@@ -28,8 +28,8 @@ impl<'ctx> GenFunctionCall<'ctx> for CodeGen<'ctx> {
                 return Err(error)
         };
 
-        let _ = &self.builder.build_call(*func, &args, "call");
+        let _ = &self.builder.build_call(*func, args, "call");
 
-        return Ok(());
+        Ok(())
     }
 }

@@ -17,7 +17,7 @@ impl Func {
             return None;
         }
         let arg = self.args.remove(i);
-        return Some(arg);
+        Some(arg)
     }
 
     pub fn get_arg_index_(&self, value: &str) -> Option<u32> {
@@ -26,18 +26,16 @@ impl Func {
                 return Some(i as u32);
             }
         }
-        return None;
+        None
     }
 
     /// Checks if args uses a certaint value only works for identifiers
     pub fn args_uses(&self, value: &str) -> bool {
         for arg in &self.args {
-            if arg.type_ == TypesArg::None {
-                if arg.value == value {
-                    return true;
-                }
+            if arg.type_ == TypesArg::None && arg.value == value {
+                return true;
             }
         }
-        return false;
+        false
     }
 }

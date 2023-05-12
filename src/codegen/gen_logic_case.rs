@@ -34,28 +34,28 @@ impl<'ctx> GenLogicCase<'ctx> for CodeGen<'ctx> {
             }
             Case::EqEq(_val1, _val2) => {}
             Case::More(val1, val2) => {
-                compile_compare_nums(&self, function, logic, block, func, "more", (val1, val2))?;
+                compile_compare_nums(self, function, logic, block, func, "more", (val1, val2))?;
             }
             Case::MoreEq(val1, val2) => {
-                compile_compare_nums(&self, function, logic, block, func, "more_eq", (val1, val2))?;
+                compile_compare_nums(self, function, logic, block, func, "more_eq", (val1, val2))?;
             }
             Case::Less(val1, val2) => {
-                compile_compare_nums(&self, function, logic, block, func, "less", (val1, val2))?;
+                compile_compare_nums(self, function, logic, block, func, "less", (val1, val2))?;
             }
             Case::LessEq(val1, val2) => {
-                compile_compare_nums(&self, function, logic, block, func, "less_eq", (val1, val2))?;
+                compile_compare_nums(self, function, logic, block, func, "less_eq", (val1, val2))?;
             }
         }
-        return Ok(());
+        Ok(())
     }
 }
 
 pub fn compare_nums(num_1: i32, num_2: i32, case: &str) -> bool {
     match case {
-        "more" => return num_1 > num_2,
-        "less" => return num_1 < num_2,
-        "more_eq" => return num_1 >= num_2,
-        "less_eq" => return num_1 <= num_2,
+        "more" => num_1 > num_2,
+        "less" => num_1 < num_2,
+        "more_eq" => num_1 >= num_2,
+        "less_eq" => num_1 <= num_2,
         _ => false,
     }
 }
@@ -84,21 +84,19 @@ pub fn compile_compare_nums<'ctx>(
                         ))
                     }
                 }
-            } else {
-                if logic.else_.is_some() {
-                    let else_ = logic.else_.clone();
-                    if else_.is_some() {
-                        let else_ = else_.unwrap();
-                        match else_.type_ {
-                            Type::Block => {
-                                code.gen_block_func(function, else_.body, func, block);
-                            }
-                            t => {
-                                return Err(format!(
-                                    "Found invalid token type after comparison, {:#?}",
-                                    t
-                                ))
-                            }
+            } else if logic.else_.is_some() {
+                let else_ = logic.else_.clone();
+                if else_.is_some() {
+                    let else_ = else_.unwrap();
+                    match else_.type_ {
+                        Type::Block => {
+                            code.gen_block_func(function, else_.body, func, block);
+                        }
+                        t => {
+                            return Err(format!(
+                                "Found invalid token type after comparison, {:#?}",
+                                t
+                            ))
                         }
                     }
                 }
@@ -113,5 +111,5 @@ pub fn compile_compare_nums<'ctx>(
             ))
         }
     }
-    return Ok(());
+    Ok(())
 }

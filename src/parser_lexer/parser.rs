@@ -1,5 +1,6 @@
 use crate::ast::variable::TypeVar;
 use crate::ast::variable::Variable;
+use crate::errors::error_messages::args_no_close;
 use crate::{
     ast::{
         ast::{Arg, Ast, Case, Logic, Return, ReturnTypes, Type, TypesArg},
@@ -15,7 +16,7 @@ use crate::{
             invalid_use, invalid_var_syntax_token, non_ending_variable,
         },
     },
-    parser_lexer::lexer::lexer::{KeyWords, Operators, Token, TokenType},
+    parser_lexer::lexer::{KeyWords, Operators, Token, TokenType},
 };
 
 /// Parser struct
@@ -244,10 +245,10 @@ impl CaseLogic for Parser {
 
 impl WalkParser for Parser {
     fn peak_nth(&mut self, i: usize) -> Option<Token> {
-        return Some(self.tokens.get(self.current_position + i)?.clone());
+        Some(self.tokens.get(self.current_position + i)?.clone())
     }
     fn peak_nth_all(&mut self, n: usize) -> Option<Vec<Token>> {
-        return Some(self.tokens[self.current_position..(self.current_position + n)].to_vec());
+        Some(self.tokens[self.current_position..(self.current_position + n)].to_vec())
     }
     fn advance_back(&mut self, n: usize) {
         self.current_position -= n;
@@ -255,7 +256,7 @@ impl WalkParser for Parser {
     }
     fn up_until_token(&mut self, t: TokenType) -> Option<Vec<Token>> {
         let mut tokens = Vec::new();
-        while let Some(token) = self.next() {
+        for token in self.by_ref() {
             match token {
                 token if token.token_type == t => {
                     tokens.push(token);
@@ -266,7 +267,7 @@ impl WalkParser for Parser {
                 }
             }
         }
-        return None;
+        None
     }
 }
 
@@ -419,7 +420,7 @@ impl Parse for Parser {
                 token => todo!("Haven't added parsing for these tokens yet {token:#?}"),
             }
         }
-        return Ok(ast);
+        Ok(ast)
     }
 }
 
@@ -477,10 +478,7 @@ impl ParseTokens for Parser {
                         TokenType::OpenBracket => {
                             var.type_(parser.parse_array()?)?;
                         }
-                        TokenType::Operator(Operators::Eq) => {
-                            // Ofcourse we shouldn't  just think that it wil always be as string or
-                            // a number for now we do but this will change
-                        }
+                        TokenType::Operator(Operators::Eq) => {}
                         TokenType::SemiColon => {
                             return Ok(var);
                         }
@@ -488,7 +486,7 @@ impl ParseTokens for Parser {
                         _ => return Err(invalid_var_syntax_token(token)),
                     }
                 }
-                return Ok(var);
+                Ok(var)
             }
             None => Err(non_ending_variable(prev.value, prev.line)),
         }
@@ -534,13 +532,13 @@ impl ParseTokens for Parser {
                 token => todo!("Add parsing for these tokens {:#?}", token),
             }
         }
-        return Err(invalid_function_body_syntax("".to_string(), line));
+        Err(invalid_function_body_syntax("".to_string(), line))
     }
     fn parse_args(&mut self) -> Result<Vec<Arg>, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
 
         let Some(tokens_until_close) = self.up_until_token(TokenType::CloseBrace) else {
-            return Err(invalid_function_syntax_missing_id(prev.line))
+            return Err(args_no_close(None, prev.line));
         };
 
         let mut args = Vec::new();
@@ -601,7 +599,7 @@ impl ParseTokens for Parser {
                     }
                 }
                 TokenType::CloseBrace => {
-                    if current_arg.value != "" {
+                    if !current_arg.value.is_empty() {
                         args.push(current_arg.clone());
                         current_arg.clear_type();
                         current_arg.clear_value();
@@ -620,7 +618,8 @@ impl ParseTokens for Parser {
                 }
             }
         }
-        return Ok(args);
+        // This would be and error because we never got and closing brace
+        Err(args_no_close(None, prev.line))
     }
     fn parse_fn(&mut self) -> Result<Ast, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
@@ -671,14 +670,14 @@ impl ParseTokens for Parser {
             return_type,
             line: prev.line,
         }));
-        return Ok(ast);
+        Ok(ast)
     }
     fn parse_array(&mut self) -> Result<TypeVar, ErrorBuilder> {
         let mut current_var = String::new();
         let mut values = Vec::new();
 
         let mut line = 0;
-        while let Some(token) = self.next() {
+        for token in self.by_ref() {
             line = token.line;
             match token.token_type.clone() {
                 TokenType::Comma => {
@@ -698,7 +697,7 @@ impl ParseTokens for Parser {
                     return Ok(TypeVar::Arr { values });
                 }
                 TokenType::Number => {
-                    if current_var != "" {
+                    if !current_var.is_empty() {
                         return Err(invalid_var_syntax_token(token));
                     }
                     current_var = token.value;
@@ -707,7 +706,7 @@ impl ParseTokens for Parser {
                     continue;
                 }
                 TokenType::String => {
-                    if current_var != "" {
+                    if !current_var.is_empty() {
                         return Err(invalid_var_syntax_token(token));
                     }
                     current_var = token.value;
@@ -715,7 +714,7 @@ impl ParseTokens for Parser {
                 _ => return Err(invalid_var_syntax_token(token)),
             }
         }
-        return Err(invalid_arr_no_end(line));
+        Err(invalid_arr_no_end(line))
     }
     fn parse_fn_call(&mut self) -> Result<Func, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
@@ -746,7 +745,7 @@ impl ParseTokens for Parser {
             return Err(non_ending_variable(prev.value, prev.line));
         }
 
-        return Ok(func);
+        Ok(func)
     }
     fn parse_return(&mut self) -> Result<Return, ErrorBuilder> {
         let prev = &self.prev_token.clone().unwrap();
@@ -787,7 +786,7 @@ impl ParseTokens for Parser {
             }
         }
 
-        return Err(invalid_return_no_end(prev.line));
+        Err(invalid_return_no_end(prev.line))
     }
     fn parse_statement(&mut self) -> Result<Logic, ErrorBuilder> {
         let prev = self.prev_token.clone().unwrap();
@@ -805,23 +804,19 @@ impl ParseTokens for Parser {
                         Some(val) => match val.token_type {
                             TokenType::OpenCurlyBracket => {
                                 let body = &self.parse_block()?;
-                                return Ok(Logic::new(
-                                    case,
-                                    Some(Box::from(body.clone())),
-                                    do_.clone(),
-                                ));
+                                Ok(Logic::new(case, Some(Box::from(body.clone())), do_.clone()))
                             }
-                            _ => return Err(invalid_if_statement_body(prev.line)),
+                            _ => Err(invalid_if_statement_body(prev.line)),
                         },
-                        _ => return Err(invalid_if_statement_body(prev.line)),
+                        _ => Err(invalid_if_statement_body(prev.line)),
                     },
                     _ => {
                         self.advance_back(1);
-                        return Ok(Logic::new(case, None, do_.clone()));
+                        Ok(Logic::new(case, None, do_.clone()))
                     }
                 }
             }
-            _ => return Err(invalid_if_statement_body(prev.line)),
+            _ => Err(invalid_if_statement_body(prev.line)),
         }
     }
     fn parse_use(&mut self) -> Result<Use, ErrorBuilder> {
@@ -836,11 +831,11 @@ impl ParseTokens for Parser {
                     if end_use.token_type != TokenType::SemiColon {
                         return Err(invalid_use(Some(file.value.clone()), prev.line));
                     }
-                    return Ok(Use::new(file.value.clone()));
+                    Ok(Use::new(file.value.clone()))
                 }
-                _ => return Err(invalid_use(None, prev.line)),
+                _ => Err(invalid_use(None, prev.line)),
             },
-            None => return Err(invalid_use(None, prev.line)),
+            None => Err(invalid_use(None, prev.line)),
         }
     }
 }

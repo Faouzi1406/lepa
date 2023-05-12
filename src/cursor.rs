@@ -17,14 +17,14 @@ pub mod cursor {
             let prev = self.chars.get(self.position)?;
             self.previous = Some(*prev);
             self.position += 1;
-            return Some(*prev);
+            Some(*prev)
         }
 
         fn nth(&mut self, n: usize) -> Option<Self::Item> {
             let prev = self.chars.get(self.position)?;
             self.previous = Some(*prev);
             self.position += n + 1;
-            return Some(*prev);
+            Some(*prev)
         }
     }
 
@@ -44,11 +44,11 @@ pub mod cursor {
         /// Create a new cursor from a string
         fn new(input: String) -> Cursor {
             let chars = input.chars().collect();
-            return Cursor {
+            Cursor {
                 chars,
                 position: 0,
                 previous: None,
-            };
+            }
         }
 
         /// Peak the next char this will not advance the position of the cursor therefore not
@@ -57,23 +57,23 @@ pub mod cursor {
             if self.position + n >= self.chars.len() {
                 return None;
             }
-            return Some(self.chars[self.position..(self.position + n)].to_vec());
+            Some(self.chars[self.position..(self.position + n)].to_vec())
         }
 
         /// Peak the next char this will not advance the position of the cursor therefore not
         /// consume the char
         fn peek(&self) -> Option<&char> {
-            return Some(self.chars.get(self.position)?);
+            return self.chars.get(self.position);
         }
 
         /// Get the current position of the cursor
         fn position(&self) -> usize {
-            return self.position;
+            self.position
         }
 
         /// Get the previous character
         fn previous(&self) -> Option<char> {
-            return self.previous;
+            self.previous
         }
 
         fn advance_pos(&mut self, n: usize) {

@@ -3,8 +3,7 @@ pub mod test_parser {
     use crate::{
         ast::ast::{AstVar, ReturnTypes, Type},
         ast::variable::TypeVar,
-        parser_lexer::lexer::lexer::{KeyWords, Lexer, Operators, Token, TokenType},
-        parser_lexer::parser::{Parse, Parser, WalkParser},
+        parser_lexer::{parser::{Parse, Parser, WalkParser}, lexer::{KeyWords, Lexer, Operators, Token, TokenType}},
     };
 
     #[test]
@@ -54,14 +53,14 @@ pub mod test_parser {
         let tokens = Token::lex(input);
         let mut parse = Parser::new(tokens);
         let parse_until = parse.up_until_token(
-            crate::parser_lexer::lexer::lexer::TokenType::Operator(Operators::EqEq),
+            crate::parser_lexer::lexer::TokenType::Operator(Operators::EqEq),
         );
 
         // Check the amount of tokens
         assert_eq!(parse_until.clone().unwrap().len(), 2);
         // Check if tokens are correct
         assert_eq!(
-            parse_until.clone().unwrap(),
+            parse_until.unwrap(),
             vec![
                 Token {
                     token_type: TokenType::Keyword(KeyWords::If),

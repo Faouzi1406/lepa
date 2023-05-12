@@ -61,30 +61,29 @@ impl Compile for Ast {
     }
     fn create_binary(file_name: &str) {
         let mut llvm = Command::new("llvm-as");
-        llvm.arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name);
+        llvm.arg(current_dir().unwrap().to_str().unwrap().to_string() + file_name);
 
         let run_llvm = llvm.spawn();
         match run_llvm {
             Ok(_) => {
                 let mut clang = Command::new("clang");
-                clang
-                    .arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name + ".bc");
+                clang.arg(current_dir().unwrap().to_str().unwrap().to_string() + file_name + ".bc");
                 clang
                     .arg("-o")
-                    .arg(current_dir().unwrap().to_str().unwrap().to_string() + &file_name);
+                    .arg(current_dir().unwrap().to_str().unwrap().to_string() + file_name);
 
                 let run_clang = clang.output();
                 match run_clang {
                     Ok(_) => {
                         LOGGER.info(&format!(
                             "Compiled to: {}",
-                            current_dir().unwrap().to_str().unwrap().to_string() + &file_name
+                            current_dir().unwrap().to_str().unwrap().to_string() + file_name
                         ));
                     }
                     Err(value) => {
                         LOGGER.error(&format!(
                             "Couldn't compile to: {}; error {:?}",
-                            current_dir().unwrap().to_str().unwrap().to_string() + &file_name,
+                            current_dir().unwrap().to_str().unwrap().to_string() + file_name,
                             value
                         ));
                     }
@@ -93,7 +92,7 @@ impl Compile for Ast {
             Err(value) => {
                 LOGGER.error(&format!(
                     "Couldn't compile to: {}; error {:?}",
-                    current_dir().unwrap().to_str().unwrap().to_string() + &file_name,
+                    current_dir().unwrap().to_str().unwrap().to_string() + file_name,
                     value
                 ));
             }
@@ -214,7 +213,7 @@ impl<'ctx> Gen<'ctx> for CodeGen<'ctx> {
                     }
                 }
                 Type::Variable(var) => {
-                    let _ = &self.gen_variable(&var, function, func);
+                    let _ = &self.gen_variable(var, function, func);
                 }
                 Type::Function(func) => {
                     let _ = &self.gen_func(func);

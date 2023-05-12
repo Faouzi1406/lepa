@@ -3,7 +3,7 @@ use std::{fs, io::Write};
 
 use lepa::{
     ast::use_::{CompileUses, GetUses, Use},
-    parser_lexer::lexer::lexer::{Lexer, Token},
+    parser_lexer::lexer::{Lexer, Token},
     parser_lexer::parser::{Parse, Parser},
 };
 

@@ -16,7 +16,7 @@ pub struct DetectedVar<'a> {
 
 impl<'a> DetectedVar<'a> {
     fn new(block: &'a Ast, var: &'a Variable) -> DetectedVar<'a> {
-        return DetectedVar { block, var };
+        DetectedVar { block, var }
     }
 }
 
@@ -56,7 +56,7 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
 
                     if logic.else_.is_some() {
                         let else_ = &logic.else_.as_ref().unwrap();
-                        let else_ = DetectUnused::new(&else_);
+                        let else_ = DetectUnused::new(else_);
                         let mut else_vars = else_.detect_vars();
                         vars.append(&mut else_vars);
                     }
@@ -98,11 +98,9 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                         };
                     }
                     Type::Return(val) => {
-                        if val.type_ == ReturnTypes::Identifier {
-                            if val.value ==  detected_var.var.name {
-                                used = true;
-                                break;
-                            }
+                        if val.type_ == ReturnTypes::Identifier && val.value == detected_var.var.name {
+                            used = true;
+                            break;
                         }
                     }
                     Type::Logic(logic) => {
@@ -126,7 +124,7 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
 
                                     if logic.else_.is_some() {
                                         let else_ = &logic.else_.as_ref().unwrap();
-                                        let block = DetectUnused::new(&else_);
+                                        let block = DetectUnused::new(else_);
                                         if block.detect_used_in_block_var(&detected_var.var.name) {
                                             used = true;
                                             break;
@@ -147,7 +145,7 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                 }
             }
             if !used {
-                unused_vars.push(UnusedValues::Variable(&detected_var.var));
+                unused_vars.push(UnusedValues::Variable(detected_var.var));
             }
         }
         unused_vars
@@ -164,10 +162,8 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                 },
                 Type::Function(func) => {
                     for arg in &func.args {
-                        if arg.type_ == TypesArg::None {
-                            if arg.value == value {
-                                return true;
-                            }
+                        if arg.type_ == TypesArg::None && arg.value == value {
+                            return true;
                         }
                     }
                     if func.body.is_some() {
@@ -177,10 +173,8 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                     }
                 }
                 Type::Return(val) => {
-                        if val.type_ == ReturnTypes::Identifier {
-                            if val.value ==  value {
-                                return true;
-                            }
+                        if val.type_ == ReturnTypes::Identifier && val.value == value {
+                            return true;
                         }
                 }
                 Type::Block => {
@@ -190,6 +184,6 @@ impl<'a> DetectorVars<'a> for DetectUnused<'a> {
                 _ => continue,
             }
         }
-        return false;
+        false
     }
 }

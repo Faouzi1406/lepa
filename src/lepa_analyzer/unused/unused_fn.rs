@@ -26,7 +26,7 @@ impl<'a> DetectUnusedFunc<'a> for DetectUnused<'a> {
         for token in &self.ast.body {
             match &token.type_ {
                 Type::Function(func) => {
-                    found_funcs.push(DetectedFunc::new(&func));
+                    found_funcs.push(DetectedFunc::new(func));
                 }
                 Type::Block => {
                     let detector = DetectUnused::new(token);

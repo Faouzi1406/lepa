@@ -24,27 +24,23 @@ impl TypeVar {
     }
     pub fn uses(&self, uses: &str) -> bool {
         match &self {
-            TypeVar::Identifier(value) if *value == uses => {
-                return true;
-            }
+            TypeVar::Identifier(value) if *value == uses => true,
             TypeVar::Arr { values } => {
                 for value in values {
                     let false = value.uses(uses) else {
                         return true;
                     };
                 }
-                return false;
+                false
             }
             TypeVar::FunctionCall(func) => {
                 let args = &func.args;
                 for arg in args {
-                    if arg.type_ == TypesArg::None {
-                        if arg.value == uses {
-                            return true;
-                        }
+                    if arg.type_ == TypesArg::None && arg.value == uses {
+                        return true;
                     }
                 }
-                return false;
+                false
             }
             _ => false,
         }
@@ -94,7 +90,7 @@ impl VarBuilder for Variable {
         Ok(())
     }
     fn name(&mut self, name: impl AsRef<str>) -> Result<(), ErrorBuilder> {
-        if self.name != "" {
+        if !self.name.is_empty() {
             return Err(ErrorBuilder::new()
                 .message(format!(
                     "Tried assigning a name to and already named variable: {}",
